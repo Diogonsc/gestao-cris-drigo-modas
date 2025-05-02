@@ -36,12 +36,12 @@ const mockProducts = [
 
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all"); // Changed from empty string to "all"
 
   const filteredProducts = mockProducts.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (categoryFilter === "" || product.category === categoryFilter)
+      (categoryFilter === "all" || product.category === categoryFilter) // Updated filter condition
   );
 
   return (
@@ -83,7 +83,7 @@ const Produtos = () => {
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as categorias</SelectItem>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
                   <SelectItem value="Vestuário">Vestuário</SelectItem>
                   <SelectItem value="Calçados">Calçados</SelectItem>
                   <SelectItem value="Acessórios">Acessórios</SelectItem>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,8 @@ interface AddressData {
   bairro: string;
   localidade: string;
   uf: string;
+  // Add an optional error field for ViaCEP API responses
+  erro?: boolean;
 }
 
 export function ClientForm() {
