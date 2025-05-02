@@ -8,15 +8,27 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    open: true,
+    cors: true
   },
   plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
+    react({
+      tsDecorators: true,
+      plugins: [["@swc/plugin-styled-components", {}]]
+    }),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: "dist",
+    sourcemap: true,
+    chunkSizeWarningLimit: 1000,
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom"],
+  }
 }));

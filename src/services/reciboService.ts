@@ -1,6 +1,5 @@
-
 import { Cliente, Compra } from '@/types';
-import { toPDF } from 'react-to-pdf';
+import toPDF from 'react-to-pdf';
 import { formatarMoeda, formatarData } from '@/utils/masks';
 import { getEmpresa } from './mockData';
 
@@ -8,6 +7,7 @@ import { getEmpresa } from './mockData';
 export const gerarRecibo = async (cliente: Cliente, compra: Compra): Promise<void> => {
   // Criar elemento HTML temporário para o recibo
   const reciboElement = document.createElement('div');
+  reciboElement.id = 'recibo-pdf';
   reciboElement.style.padding = '40px';
   reciboElement.style.maxWidth = '800px';
   reciboElement.style.margin = '0 auto';
@@ -83,14 +83,17 @@ export const gerarRecibo = async (cliente: Cliente, compra: Compra): Promise<voi
   document.body.appendChild(reciboElement);
   
   try {
-    // Gerar PDF
-    await toPDF(reciboElement, {
+    // Gerar PDF usando o elemento diretamente
+    await toPDF(() => reciboElement, {
       filename: `recibo_${compra.id}_${new Date().getTime()}.pdf`,
       page: {
         margin: 20,
         format: 'a4',
       }
     });
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    throw new Error('Falha ao gerar o PDF do recibo');
   } finally {
     // Remover elemento temporário
     document.body.removeChild(reciboElement);

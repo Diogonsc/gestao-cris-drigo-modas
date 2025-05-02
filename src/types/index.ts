@@ -1,4 +1,3 @@
-
 export interface Cliente {
   id: string;
   nome: string;
@@ -26,6 +25,10 @@ export interface Produto {
   preco: number;
   estoque: number;
   categoria: string;
+  estoqueMinimo: number;
+  fornecedor?: string;
+  dataCadastro?: string;
+  dataAtualizacao?: string;
 }
 
 export interface ProdutoCompra {

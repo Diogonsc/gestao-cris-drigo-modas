@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +25,7 @@ const clienteSchema = z.object({
     numero: z.string().min(1, { message: "Número obrigatório" }),
     complemento: z.string().optional(),
     bairro: z.string().min(3, { message: "Bairro obrigatório" }),
-    cidade: z.string().min(3, { message: "Cidade obrigatório" }),
+    cidade: z.string().min(3, { message: "Cidade obrigatória" }),
     estado: z.string().min(2, { message: "Estado obrigatório" }),
   })
 });
@@ -41,11 +40,11 @@ interface ClienteFormProps {
 export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const form = useForm<ClienteFormData>({
     resolver: zodResolver(clienteSchema),
-    defaultValues: cliente ? 
-      { ...cliente } : 
+    defaultValues: cliente ?
+      { ...cliente } :
       {
         nome: "",
         email: "",
@@ -62,7 +61,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
         }
       },
   });
-  
+
   const handleSubmit = async (data: ClienteFormData) => {
     setIsLoading(true);
     try {
@@ -70,22 +69,28 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       const telefone = data.telefone.replace(/\D/g, "");
       const whatsapp = data.whatsapp.replace(/\D/g, "");
       const cep = data.endereco.cep.replace(/\D/g, "");
-      
+
       const clienteData = {
-        ...data,
+        nome: data.nome,
+        email: data.email,
         telefone: data.telefone,
         whatsapp,
         endereco: {
-          ...data.endereco,
-          cep
+          cep,
+          logradouro: data.endereco.logradouro,
+          numero: data.endereco.numero,
+          complemento: data.endereco.complemento,
+          bairro: data.endereco.bairro,
+          cidade: data.endereco.cidade,
+          estado: data.endereco.estado
         },
         pendingValue: cliente?.pendingValue || 0,
       };
-      
+
       if (cliente) {
         // Atualizar cliente existente
         atualizarCliente({ ...clienteData, id: cliente.id });
-        
+
         toast({
           title: "Cliente atualizado",
           description: "As informações do cliente foram atualizadas com sucesso!",
@@ -93,13 +98,13 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       } else {
         // Adicionar novo cliente
         adicionarCliente(clienteData);
-        
+
         toast({
           title: "Cliente cadastrado",
           description: "O cliente foi cadastrado com sucesso!",
         });
       }
-      
+
       onSuccess();
     } catch (error) {
       toast({
@@ -111,20 +116,20 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       setIsLoading(false);
     }
   };
-  
+
   const handleCepBlur = async () => {
     const cep = form.getValues("endereco.cep").replace(/\D/g, "");
-    
+
     if (cep.length === 8) {
       setIsLoading(true);
       try {
         const dadosEndereco = await buscarCep(cep);
-        
+
         form.setValue("endereco.logradouro", dadosEndereco.logradouro);
         form.setValue("endereco.bairro", dadosEndereco.bairro);
         form.setValue("endereco.cidade", dadosEndereco.localidade);
         form.setValue("endereco.estado", dadosEndereco.uf);
-        
+
         if (dadosEndereco.complemento) {
           form.setValue("endereco.complemento", dadosEndereco.complemento);
         }
@@ -145,8 +150,8 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       <CardHeader>
         <CardTitle>{cliente ? "Editar Cliente" : "Cadastro de Cliente"}</CardTitle>
         <CardDescription>
-          {cliente 
-            ? "Atualize as informações do cliente" 
+          {cliente
+            ? "Atualize as informações do cliente"
             : "Preencha os dados para cadastrar um novo cliente"}
         </CardDescription>
       </CardHeader>
@@ -158,7 +163,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                 <h3 className="text-lg font-medium">Informações Pessoais</h3>
                 <p className="text-sm text-muted-foreground">Dados básicos do cliente</p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <CustomFormField
                   name="nome"
@@ -193,17 +198,10 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                     <InputMask
                       mask="(99) 99999-9999"
                       maskChar={null}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
+                      {...field}
+                      disabled={isLoading} // Passando disabled diretamente para InputMask
                     >
-                      {(inputProps: any) => (
-                        <Input
-                          {...inputProps}
-                          placeholder="(00) 00000-0000"
-                          disabled={isLoading}
-                        />
-                      )}
+                      {(inputProps: any) => <Input {...inputProps} placeholder="(00) 00000-0000" />}
                     </InputMask>
                   )}
                 />
@@ -215,17 +213,10 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                     <InputMask
                       mask="(99) 99999-9999"
                       maskChar={null}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
+                      {...field}
+                      disabled={isLoading} // Passando disabled diretamente para InputMask
                     >
-                      {(inputProps: any) => (
-                        <Input
-                          {...inputProps}
-                          placeholder="(00) 00000-0000"
-                          disabled={isLoading}
-                        />
-                      )}
+                      {(inputProps: any) => <Input {...inputProps} placeholder="(00) 00000-0000" />}
                     </InputMask>
                   )}
                 />
@@ -239,7 +230,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   Informe o CEP para preenchimento automático
                 </p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <CustomFormField
                   name="endereco.cep"
@@ -255,12 +246,12 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                         field.onBlur();
                         handleCepBlur();
                       }}
+                      disabled={isLoading} // Passando disabled diretamente para InputMask
                     >
                       {(inputProps: any) => (
                         <Input
                           {...inputProps}
                           placeholder="00000-000"
-                          disabled={isLoading}
                         />
                       )}
                     </InputMask>
@@ -281,7 +272,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <CustomFormField
                   name="endereco.numero"
@@ -310,7 +301,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <CustomFormField
                   name="endereco.bairro"

@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Phone, Eye } from "lucide-react";
+import { FaSearch, FaPlus, FaWhatsapp, FaEye } from "react-icons/fa";
 import {
   Table,
   TableBody,
@@ -118,7 +117,7 @@ const Clientes = () => {
           </p>
         </div>
         <Button onClick={handleNovoCliente}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+          <FaPlus className="mr-2 h-4 w-4" /> Novo Cliente
         </Button>
       </div>
 
@@ -131,7 +130,7 @@ const Clientes = () => {
         </CardHeader>
         <CardContent>
           <div className="relative flex-1 mb-6">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <FaSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar clientes..."
               className="pl-8"
@@ -172,17 +171,17 @@ const Clientes = () => {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => handleAbrirModal(cliente)}
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-white"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-full hover:bg-gray-500/10"
                         >
-                          <Eye className="h-4 w-4" />
+                          <FaEye className="h-5 w-5 text-gray-500" />
                         </button>
                         <a 
                           href={`${formatarWhatsAppLink(cliente.whatsapp)}?text=${formatarWhatsAppMensagem(cliente)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-full hover:bg-green-500/10"
                         >
-                          <Phone className="h-4 w-4" />
+                          <FaWhatsapp className="h-5 w-5 text-green-500" />
                         </a>
                       </div>
                     </TableCell>

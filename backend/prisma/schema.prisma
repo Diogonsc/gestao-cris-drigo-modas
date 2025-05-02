@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  funcao    Funcao   @default(VENDEDOR)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pagamentos Pagamento[]
+}
+
+model Cliente {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  telefone  String
+  whatsapp  String?
+  endereco  Endereco?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  compras    Compra[]
+  pagamentos Pagamento[]
+}
+
+model Endereco {
+  id           String   @id @default(uuid())
+  cep          String
+  logradouro   String
+  numero       String
+  complemento  String?
+  bairro       String
+  cidade       String
+  estado       String
+  clienteId    String   @unique
+  cliente      Cliente? @relation(fields: [clienteId], references: [id])
+}
+
+model Produto {
+  id            String   @id @default(uuid())
+  nome          String
+  sku           String   @unique
+  preco         Float
+  estoque       Int
+  estoqueMinimo Int
+  categoria     String
+  fornecedor    String?
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  compras ProdutoCompra[]
+  @@map("produtos")
+}
+
+model Compra {
+  id             String         @id @default(uuid())
+  clienteId      String
+  cliente        Cliente        @relation(fields: [clienteId], references: [id])
+  produtos       ProdutoCompra[]
+  valorTotal     Float
+  tipoPagamento  TipoPagamento
+  numeroParcelas Int
+  status         StatusCompra   @default(EM_ABERTO)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  pagamentos Pagamento[]
+}
+
+model ProdutoCompra {
+  id            String  @id @default(uuid())
+  compraId      String
+  compra        Compra  @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  produtoId     String
+  produto       Produto @relation(fields: [produtoId], references: [id])
+  quantidade    Int
+  valorUnitario Float
+  valorTotal    Float
+}
+
+model Pagamento {
+  id        String   @id @default(uuid())
+  compraId  String
+  compra    Compra   @relation(fields: [compraId], references: [id])
+  clienteId String
+  cliente   Cliente  @relation(fields: [clienteId], references: [id])
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  valor     Float
+  data      DateTime @default(now())
+}
+
+enum Funcao {
+  ADMIN
+  VENDEDOR
+  VISUALIZADOR
+}
+
+enum TipoPagamento {
+  AVISTA
+  PARCELADO
+}
+
+enum StatusCompra {
+  EM_ABERTO
+  PARCIALMENTE_PAGO
+  QUITADO
+} 

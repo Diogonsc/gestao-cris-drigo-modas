@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Edit, Trash } from "lucide-react";
+import { FaSearch, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import {
   Table,
   TableBody,
@@ -151,7 +150,7 @@ const Usuarios = () => {
           </p>
         </div>
         <Button onClick={() => handleAbrirModal()}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Usuário
+          <FaPlus className="mr-2 h-4 w-4" /> Novo Usuário
         </Button>
       </div>
 
@@ -164,7 +163,7 @@ const Usuarios = () => {
         </CardHeader>
         <CardContent>
           <div className="relative flex-1 mb-6">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <FaSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar usuários..."
               className="pl-8"
@@ -197,7 +196,7 @@ const Usuarios = () => {
                             size="icon"
                             onClick={() => handleAbrirModal(usuario)}
                           >
-                            <Edit className="h-4 w-4" />
+                            <FaEdit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -205,7 +204,7 @@ const Usuarios = () => {
                             onClick={() => handleExcluirUsuario(usuario.id)}
                             disabled={usuario.funcao === "admin"} // Não permitir excluir o admin
                           >
-                            <Trash className="h-4 w-4 text-red-500" />
+                            <FaTrash className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
                       </TableCell>

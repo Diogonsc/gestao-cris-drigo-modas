@@ -1,7 +1,7 @@
-
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Outlet } from "react-router-dom";
+import { FaBars } from "react-icons/fa";
 
 export function Layout() {
   return (

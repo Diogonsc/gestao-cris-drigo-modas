@@ -1,4 +1,3 @@
-
 import { Cliente, Compra, Produto, Usuario, Empresa } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -97,7 +96,8 @@ const mockProdutos: Produto[] = [
     sku: "CAM001",
     preco: 59.9,
     estoque: 15,
-    categoria: "Vestuário"
+    categoria: "Vestuário",
+    estoqueMinimo: 5
   },
   {
     id: "p2",
@@ -105,7 +105,8 @@ const mockProdutos: Produto[] = [
     sku: "CAL001",
     preco: 129.9,
     estoque: 8,
-    categoria: "Vestuário"
+    categoria: "Vestuário",
+    estoqueMinimo: 3
   },
   {
     id: "p3",
@@ -113,7 +114,8 @@ const mockProdutos: Produto[] = [
     sku: "TEN001",
     preco: 199.9,
     estoque: 5,
-    categoria: "Calçados"
+    categoria: "Calçados",
+    estoqueMinimo: 2
   },
   {
     id: "p4",
@@ -121,7 +123,8 @@ const mockProdutos: Produto[] = [
     sku: "MOL001",
     preco: 149.9,
     estoque: 12,
-    categoria: "Vestuário"
+    categoria: "Vestuário",
+    estoqueMinimo: 4
   },
   {
     id: "p5",
@@ -129,7 +132,8 @@ const mockProdutos: Produto[] = [
     sku: "BON001",
     preco: 49.9,
     estoque: 20,
-    categoria: "Acessórios"
+    categoria: "Acessórios",
+    estoqueMinimo: 5
   },
 ];
 
@@ -334,4 +338,31 @@ export const getDadosClientesMaisAtivos = () => {
     { nome: "Carlos Ferreira", compras: 4 },
     { nome: "Pedro Santos", compras: 2 },
   ];
+};
+
+export const adicionarProduto = (produto: Produto) => {
+  mockProdutos.push(produto);
+  return produto;
+};
+
+export const atualizarProduto = (produto: Produto) => {
+  const index = mockProdutos.findIndex(p => p.id === produto.id);
+  if (index !== -1) {
+    mockProdutos[index] = produto;
+    return produto;
+  }
+  return null;
+};
+
+export const excluirProduto = (id: string) => {
+  const index = mockProdutos.findIndex(p => p.id === id);
+  if (index !== -1) {
+    mockProdutos.splice(index, 1);
+    return true;
+  }
+  return false;
+};
+
+export const getProdutoPorId = (id: string) => {
+  return mockProdutos.find(p => p.id === id);
 };

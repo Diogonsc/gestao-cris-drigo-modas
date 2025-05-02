@@ -1,7 +1,6 @@
-
 import { ClienteForm } from "@/components/cliente/cliente-form";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const NovoCliente = () => {
@@ -15,7 +14,7 @@ const NovoCliente = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => navigate("/clientes")}>
-          <ArrowLeft className="h-4 w-4" />
+          <FaArrowLeft className="h-4 w-4" />
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Novo Cliente</h1>

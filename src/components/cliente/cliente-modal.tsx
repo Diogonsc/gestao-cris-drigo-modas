@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Cliente, Compra } from "@/types";
 import { formatarMoeda, formatarData, formatarWhatsAppLink, formatarWhatsAppMensagem } from "@/utils/masks";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Phone, FileText, CreditCard } from "lucide-react";
+import { FaPhone, FaFileAlt, FaCreditCard } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
 import { gerarRecibo } from "@/services/reciboService";
 import { getComprasPorCliente, registrarPagamento } from "@/services/mockData";
@@ -39,7 +38,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
   const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false);
   
   // Carrega as compras do cliente quando o modal é aberto
-  React.useEffect(() => {
+  useEffect(() => {
     if (cliente) {
       setCompras(getComprasPorCliente(cliente.id));
     }
@@ -138,7 +137,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
                       >
-                        <Phone className="h-4 w-4" />
+                        <FaPhone className="h-4 w-4" />
                       </a>
                     </div>
                   </div>
@@ -202,7 +201,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white"
                       >
-                        <Phone className="h-4 w-4" />
+                        <FaPhone className="h-4 w-4" />
                         <span>Enviar Cobrança</span>
                       </a>
                     )}
@@ -266,7 +265,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                                   className="flex items-center gap-1"
                                   onClick={() => handleAbrirPagamento(compra)}
                                 >
-                                  <CreditCard className="h-4 w-4" /> Registrar Pagamento
+                                  <FaCreditCard className="h-4 w-4" /> Registrar Pagamento
                                 </Button>
                               )}
                               <Button 
@@ -275,7 +274,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                                 className="flex items-center gap-1"
                                 onClick={() => handleGerarRecibo(compra)}
                               >
-                                <FileText className="h-4 w-4" /> Gerar Recibo
+                                <FaFileAlt className="h-4 w-4" /> Gerar Recibo
                               </Button>
                             </div>
                           </div>

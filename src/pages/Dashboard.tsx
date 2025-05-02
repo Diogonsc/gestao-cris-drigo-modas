@@ -1,6 +1,5 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, ArrowUp, ArrowDown, TrendingUp, CheckCircle2, AlertTriangle, ShoppingBag } from "lucide-react";
+import { FaBox, FaUsers, FaArrowUp, FaArrowDown, FaChartLine, FaCheckCircle, FaExclamationTriangle, FaShoppingBag } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getClientes, getCompras, getProdutos } from "@/services/mockData";
@@ -73,7 +72,7 @@ const Dashboard = () => {
             <CardTitle className="text-sm font-medium">
               Produtos em Estoque
             </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <FaBox className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalProdutos}</div>
@@ -98,7 +97,7 @@ const Dashboard = () => {
             <CardTitle className="text-sm font-medium">
               Clientes Registrados
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <FaUsers className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalClientes}</div>
@@ -123,7 +122,7 @@ const Dashboard = () => {
             <CardTitle className="text-sm font-medium">
               Entradas
             </CardTitle>
-            <ArrowDown className="h-4 w-4 text-green-500" />
+            <FaArrowDown className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -150,7 +149,7 @@ const Dashboard = () => {
             <CardTitle className="text-sm font-medium">
               Pendências
             </CardTitle>
-            <ArrowUp className="h-4 w-4 text-red-500" />
+            <FaArrowUp className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">
@@ -188,7 +187,7 @@ const Dashboard = () => {
               onClick={() => navigate('/nova-compra')}
               className="flex items-center gap-1"
             >
-              <ShoppingBag className="h-4 w-4 mr-1" /> Nova Venda
+              <FaShoppingBag className="h-4 w-4 mr-1" /> Nova Venda
             </Button>
           </CardHeader>
           <CardContent>
@@ -265,7 +264,7 @@ const Dashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <FaCheckCircle className="h-5 w-5 text-green-500" />
               Clientes com Pagamentos Pendentes
             </CardTitle>
           </CardHeader>
@@ -314,7 +313,7 @@ const Dashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-500" />
+              <FaChartLine className="h-5 w-5 text-blue-500" />
               Desempenho Rápido
             </CardTitle>
           </CardHeader>

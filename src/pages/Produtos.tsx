@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Filter, Pencil, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,24 +24,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const mockProducts = [
-  { id: 1, name: "Camiseta Básica P", sku: "CAM001", price: 59.9, stock: 15, category: "Vestuário" },
-  { id: 2, name: "Calça Jeans 42", sku: "CAL001", price: 129.9, stock: 8, category: "Vestuário" },
-  { id: 3, name: "Tênis Casual 39", sku: "TEN001", price: 199.9, stock: 5, category: "Calçados" },
-  { id: 4, name: "Moletom Unissex G", sku: "MOL001", price: 149.9, stock: 12, category: "Vestuário" },
-  { id: 5, name: "Boné Aba Reta", sku: "BON001", price: 49.9, stock: 20, category: "Acessórios" },
-];
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ProdutoForm } from "@/components/produto/produto-form";
+import { EstoqueManager } from "@/components/produto/estoque-manager";
+import { EstoqueAlerts } from "@/components/produto/estoque-alerts";
+import { EstoqueRelatorios } from "@/components/produto/estoque-relatorios";
+import { getProdutos, excluirProduto } from "@/services/mockData";
+import { useToast } from "@/hooks/use-toast";
+import { Produto } from "@/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Produtos = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all"); // Changed from empty string to "all"
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedProduto, setSelectedProduto] = useState<Produto | undefined>();
+  const [produtos, setProdutos] = useState<Produto[]>(getProdutos());
+  const [selectedTab, setSelectedTab] = useState<"detalhes" | "estoque">("detalhes");
 
-  const filteredProducts = mockProducts.filter(
+  const filteredProducts = produtos.filter(
     (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (categoryFilter === "all" || product.category === categoryFilter) // Updated filter condition
+      product.nome.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (categoryFilter === "all" || product.categoria === categoryFilter)
   );
+
+  const handleDelete = (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir este produto?")) {
+      if (excluirProduto(id)) {
+        setProdutos(getProdutos());
+        toast({
+          title: "Produto excluído",
+          description: "O produto foi excluído com sucesso!",
+        });
+      }
+    }
+  };
+
+  const handleSuccess = () => {
+    setProdutos(getProdutos());
+    setIsFormOpen(false);
+    setSelectedProduto(undefined);
+  };
 
   return (
     <div className="space-y-6">
@@ -53,10 +76,13 @@ const Produtos = () => {
             Gerencie seu estoque e cadastro de produtos
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsFormOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> Novo Produto
         </Button>
       </div>
+
+      <EstoqueAlerts />
+      <EstoqueRelatorios />
 
       <Card>
         <CardHeader>
@@ -101,30 +127,52 @@ const Produtos = () => {
                   <TableHead>Categoria</TableHead>
                   <TableHead className="text-right">Preço</TableHead>
                   <TableHead className="text-right">Estoque</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.map((product) => (
                   <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="font-medium">{product.nome}</TableCell>
                     <TableCell>{product.sku}</TableCell>
-                    <TableCell>{product.category}</TableCell>
+                    <TableCell>{product.categoria}</TableCell>
                     <TableCell className="text-right">
-                      {product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {product.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <span>{product.stock}</span>
-                        {product.stock <= 5 && (
+                        <span>{product.estoque}</span>
+                        {product.estoque <= 5 && (
                           <div className="h-2 w-2 rounded-full bg-red-500"></div>
                         )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedProduto(product);
+                            setIsFormOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredProducts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center h-32 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center h-32 text-muted-foreground">
                       Nenhum produto encontrado.
                     </TableCell>
                   </TableRow>
@@ -134,6 +182,36 @@ const Produtos = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedProduto ? "Editar Produto" : "Novo Produto"}
+            </DialogTitle>
+          </DialogHeader>
+          <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as "detalhes" | "estoque")}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
+              <TabsTrigger value="estoque">Estoque</TabsTrigger>
+            </TabsList>
+            <TabsContent value="detalhes">
+              <ProdutoForm
+                produto={selectedProduto}
+                onSuccess={handleSuccess}
+              />
+            </TabsContent>
+            <TabsContent value="estoque">
+              {selectedProduto && (
+                <EstoqueManager
+                  produto={selectedProduto}
+                  onSuccess={handleSuccess}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
