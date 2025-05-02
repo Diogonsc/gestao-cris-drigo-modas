@@ -1,11 +1,15 @@
 
-import { ClientForm } from "@/components/client-form";
+import { ClienteForm } from "@/components/cliente/cliente-form";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const NovoCliente = () => {
   const navigate = useNavigate();
+
+  const handleSuccess = () => {
+    navigate("/clientes");
+  };
 
   return (
     <div className="space-y-6">
@@ -21,7 +25,7 @@ const NovoCliente = () => {
         </div>
       </div>
 
-      <ClientForm />
+      <ClienteForm onSuccess={handleSuccess} />
     </div>
   );
 };

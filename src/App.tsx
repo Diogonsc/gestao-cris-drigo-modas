@@ -13,8 +13,10 @@ import NotFound from "./pages/NotFound";
 import Produtos from "./pages/Produtos";
 import Clientes from "./pages/Clientes";
 import NovoCliente from "./pages/NovoCliente";
+import NovaCompra from "./pages/NovaCompra";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
+import Usuarios from "./pages/Usuarios";
 
 const queryClient = new QueryClient();
 
@@ -31,8 +33,10 @@ const App = () => (
               <Route path="/produtos" element={<Produtos />} />
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/clientes/novo" element={<NovoCliente />} />
+              <Route path="/nova-compra" element={<NovaCompra />} />
               <Route path="/relatorios" element={<Relatorios />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/usuarios" element={<Usuarios />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

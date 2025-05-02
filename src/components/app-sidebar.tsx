@@ -6,7 +6,9 @@ import {
   Users, 
   BarChart2, 
   Settings, 
-  Home
+  Home,
+  ShoppingCart,
+  UserCircle
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,9 +41,19 @@ const menuItems = [
     url: "/clientes",
   },
   {
+    title: "Nova Compra",
+    icon: ShoppingCart,
+    url: "/nova-compra",
+  },
+  {
     title: "Relatórios",
     icon: BarChart2,
     url: "/relatorios",
+  },
+  {
+    title: "Usuários",
+    icon: UserCircle,
+    url: "/usuarios",
   },
   {
     title: "Configurações",
