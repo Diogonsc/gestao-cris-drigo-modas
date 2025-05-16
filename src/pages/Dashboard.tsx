@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getClientes, getCompras, getProdutos } from "@/services/mockData";
 import { Cliente, Compra } from "@/types";
+import { DateRangeSelector } from "@/components/DateRangeSelector";
+import { useState } from "react";
 
 import {
   LineChart,
@@ -20,6 +22,10 @@ const Dashboard = () => {
   const clientes = getClientes();
   const produtos = getProdutos();
   const compras = getCompras();
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
   
   // Calcular estatísticas
   const totalClientes = clientes.length;
@@ -57,13 +63,20 @@ const Dashboard = () => {
     .sort((a, b) => b.pendingValue - a.pendingValue)
     .slice(0, 3);
   
+  const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
+    setDateRange(range);
+    // TODO: Implement data filtering based on date range
+  };
+  
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Visão geral do seu negócio e atividades recentes.
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Visão geral do seu negócio e atividades recentes.
+          </p>
+        </div>
       </div>
       
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">

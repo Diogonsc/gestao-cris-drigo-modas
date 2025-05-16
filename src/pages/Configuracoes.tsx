@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Card,
@@ -14,11 +13,13 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useThemeSettings } from "@/context/theme-settings-context";
 
 const Configuracoes = () => {
   const { toast } = useToast();
+  const { primaryColor, setPrimaryColor } = useThemeSettings();
   const [companyName, setCompanyName] = useState("Gestão Pro");
-  const [primaryColor, setPrimaryColor] = useState("#0099ff");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,8 +121,8 @@ const Configuracoes = () => {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="theme-toggle">Tema Escuro</Label>
-                  <Switch id="theme-toggle" />
+                  <Label htmlFor="theme-toggle">Tema</Label>
+                  <ThemeToggle />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Alterna entre os temas claro e escuro

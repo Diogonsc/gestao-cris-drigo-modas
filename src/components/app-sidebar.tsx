@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
@@ -10,6 +9,7 @@ import {
   ShoppingCart,
   UserCircle
 } from "lucide-react";
+import { UserInfo } from "@/components/user-info";
 import {
   Sidebar,
   SidebarContent,
@@ -99,8 +99,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t flex justify-center">
-        <ThemeToggle />
+      <SidebarFooter className="px-2 py-4 border-t flex justify-center">
+        <UserInfo />
       </SidebarFooter>
     </Sidebar>
   );

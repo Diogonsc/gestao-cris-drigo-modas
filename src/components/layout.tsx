@@ -1,9 +1,12 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Outlet } from "react-router-dom";
-import { FaBars } from "react-icons/fa";
+import { Menu } from "lucide-react";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 export function Layout() {
+  useThemeColors();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -21,6 +24,3 @@ export function Layout() {
     </SidebarProvider>
   );
 }
-
-// Import the Menu icon from lucide-react
-import { Menu } from "lucide-react";

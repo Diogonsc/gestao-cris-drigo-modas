@@ -62,6 +62,8 @@ export interface Usuario {
   nome: string;
   email: string;
   funcao: 'admin' | 'vendedor' | 'visualizador';
+  senha?: string;
+  precisaTrocarSenha?: boolean;
 }
 
 export interface ViaCepResponse {

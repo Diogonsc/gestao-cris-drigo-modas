@@ -106,13 +106,21 @@ const Usuarios = () => {
         description: "As informações do usuário foram atualizadas.",
       });
     } else {
-      // Adicionar novo usuário
+      // Adicionar novo usuário com senha padrão
       const novoId = `u${usuarios.length + 1}`;
-      setUsuarios([...usuarios, { id: novoId, nome, email, funcao }]);
+      const senhaPadrao = "123456"; // Senha padrão
+      setUsuarios([...usuarios, { 
+        id: novoId, 
+        nome, 
+        email, 
+        funcao,
+        senha: senhaPadrao,
+        precisaTrocarSenha: true
+      }]);
       
       toast({
         title: "Usuário adicionado",
-        description: "O novo usuário foi adicionado com sucesso.",
+        description: "O novo usuário foi adicionado com sucesso. A senha padrão é 123456 e será necessário trocá-la no primeiro acesso.",
       });
     }
     
