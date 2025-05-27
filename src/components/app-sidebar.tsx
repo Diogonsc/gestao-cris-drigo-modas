@@ -1,10 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { 
-  Package, 
-  Users, 
-  BarChart2, 
-  Settings, 
+import {
+  Package,
+  Users,
+  BarChart2,
+  Settings,
   Home,
   ShoppingCart,
   UserCircle
@@ -64,7 +64,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4 flex justify-center">
@@ -80,15 +80,16 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link 
-                      to={item.url} 
+                    <Link
+                      to={item.url}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                        location.pathname === item.url 
-                          ? "bg-primary text-primary-foreground" 
+                        location.pathname === item.url
+                          ? "bg-primary text-primary-foreground"
                           : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                     >
+
                       <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
                     </Link>

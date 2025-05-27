@@ -1,11 +1,29 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FaBox, FaUsers, FaArrowUp, FaArrowDown, FaChartLine, FaCheckCircle, FaExclamationTriangle, FaShoppingBag } from "react-icons/fa";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  FaBox,
+  FaUsers,
+  FaArrowUp,
+  FaArrowDown,
+  FaChartLine,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaShoppingBag,
+} from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getClientes, getCompras, getProdutos } from "@/services/mockData";
 import { Cliente, Compra } from "@/types";
 import { DateRangeSelector } from "@/components/DateRangeSelector";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useProdutoStore } from "@/store";
+import { useToast } from "@/components/ui/use-toast";
+import { Loading } from "@/components/ui/loading";
 
 import {
   LineChart,
@@ -19,27 +37,60 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { produtos, fetchProdutos, isLoading } = useProdutoStore();
   const clientes = getClientes();
-  const produtos = getProdutos();
   const compras = getCompras();
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
     from: undefined,
     to: undefined,
   });
-  
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        await fetchProdutos();
+      } catch (error) {
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os dados do dashboard",
+          variant: "destructive",
+        });
+      }
+    };
+
+    carregarDados();
+  }, [fetchProdutos, toast]);
+
   // Calcular estatísticas
   const totalClientes = clientes.length;
-  const clientesComPendencia = clientes.filter(c => c.pendingValue > 0).length;
-  
+  const clientesComPendencia = clientes.filter(
+    (c) => c.pendingValue > 0
+  ).length;
+
   const totalProdutos = produtos.length;
-  const produtosComEstoqueBaixo = produtos.filter(p => p.estoque <= 5).length;
-  
+  const produtosComEstoqueBaixo = produtos.filter(
+    (p) => p.estoque <= p.estoqueMinimo
+  ).length;
+
   const totalCompras = compras.length;
-  const totalVendas = compras.reduce((total, compra) => total + compra.valorTotal, 0);
-  const totalRecebido = compras.reduce((total, compra) => total + compra.valorPago, 0);
-  
-  const valorEmAberto = clientes.reduce((total, cliente) => total + cliente.pendingValue, 0);
-  
+  const totalVendas = compras.reduce(
+    (total, compra) => total + compra.valorTotal,
+    0
+  );
+  const totalRecebido = compras.reduce(
+    (total, compra) => total + compra.valorPago,
+    0
+  );
+
+  const valorEmAberto = clientes.reduce(
+    (total, cliente) => total + cliente.pendingValue,
+    0
+  );
+
   // Dados para o gráfico de vendas
   const dadosVendas = [
     { dia: "Seg", vendas: 1200 },
@@ -50,24 +101,31 @@ const Dashboard = () => {
     { dia: "Sáb", vendas: 2200 },
     { dia: "Dom", vendas: 1100 },
   ];
-  
+
   // Produtos com estoque baixo
   const produtosEstoqueBaixo = produtos
-    .filter(p => p.estoque <= 5)
-    .sort((a, b) => a.estoque - b.estoque)
-    .slice(0, 3);
-  
+    .filter((p) => p.estoque <= p.estoqueMinimo)
+    .sort((a, b) => a.estoque / a.estoqueMinimo - b.estoque / b.estoqueMinimo)
+    .slice(0, 5);
+
   // Clientes com pendência
   const clientesComDivida = clientes
-    .filter(c => c.pendingValue > 0)
+    .filter((c) => c.pendingValue > 0)
     .sort((a, b) => b.pendingValue - a.pendingValue)
     .slice(0, 3);
-  
-  const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
+
+  const handleDateRangeChange = (range: {
+    from: Date | undefined;
+    to: Date | undefined;
+  }) => {
     setDateRange(range);
     // TODO: Implement data filtering based on date range
   };
-  
+
+  if (isLoading) {
+    return <Loading text="Carregando dashboard..." />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -77,8 +135,12 @@ const Dashboard = () => {
             Visão geral do seu negócio e atividades recentes.
           </p>
         </div>
+        <DateRangeSelector
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
       </div>
-      
+
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -93,11 +155,11 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground pt-1">
                 {produtosComEstoqueBaixo} produtos com estoque baixo
               </p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs h-7 px-2" 
-                onClick={() => navigate('/produtos')}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 px-2"
+                onClick={() => navigate("/produtos")}
               >
                 Ver
               </Button>
@@ -118,11 +180,11 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground pt-1">
                 {clientesComPendencia} clientes com pendências
               </p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs h-7 px-2" 
-                onClick={() => navigate('/clientes')}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 px-2"
+                onClick={() => navigate("/clientes")}
               >
                 Ver
               </Button>
@@ -132,24 +194,25 @@ const Dashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Entradas
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Entradas</CardTitle>
             <FaArrowDown className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {totalRecebido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {totalRecebido.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
             </div>
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground pt-1">
                 Total recebido em {totalCompras} compras
               </p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs h-7 px-2" 
-                onClick={() => navigate('/relatorios')}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 px-2"
+                onClick={() => navigate("/relatorios")}
               >
                 Ver
               </Button>
@@ -159,24 +222,25 @@ const Dashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pendências
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Pendências</CardTitle>
             <FaArrowUp className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">
-              {valorEmAberto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {valorEmAberto.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
             </div>
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground pt-1">
                 Valor pendente de recebimento
               </p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs h-7 px-2" 
-                onClick={() => navigate('/relatorios')}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 px-2"
+                onClick={() => navigate("/relatorios")}
               >
                 Ver
               </Button>
@@ -194,10 +258,10 @@ const Dashboard = () => {
                 Últimos 7 dias
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => navigate('/nova-compra')}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/nova-compra")}
               className="flex items-center gap-1"
             >
               <FaShoppingBag className="h-4 w-4 mr-1" /> Nova Venda
@@ -213,9 +277,9 @@ const Dashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="dia" />
                   <YAxis />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => [`R$ ${value}`, "Vendas"]}
-                    cursor={{ stroke: '#ddd', strokeWidth: 1 }}
+                    cursor={{ stroke: "#ddd", strokeWidth: 1 }}
                   />
                   <Line
                     type="monotone"
@@ -229,27 +293,56 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="col-span-full lg:col-span-3">
           <CardHeader>
-            <CardTitle>Produtos com Estoque Baixo</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <FaExclamationTriangle className="h-5 w-5 text-red-500" />
+              Produtos com Estoque Baixo
+            </CardTitle>
+            <CardDescription>
+              Produtos que precisam de reposição
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {produtosEstoqueBaixo.length > 0 ? (
                 produtosEstoqueBaixo.map((produto) => (
-                  <div key={produto.id} className="flex items-center justify-between p-2 border rounded-md">
-                    <div>
+                  <div
+                    key={produto.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                  >
+                    <div className="space-y-1">
                       <p className="font-medium">{produto.nome}</p>
-                      <div className="text-xs text-muted-foreground">
-                        Estoque: {produto.estoque} / Mínimo: 5
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>Estoque: {produto.estoque}</span>
+                        <span>•</span>
+                        <span>Mínimo: {produto.estoqueMinimo}</span>
                       </div>
                     </div>
-                    <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-red-500" 
-                        style={{ width: `${(produto.estoque / 5) * 100}%` }}
-                      />
+                    <div className="flex items-center gap-4">
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${
+                            produto.estoque <= produto.estoqueMinimo / 2
+                              ? "bg-red-500"
+                              : "bg-yellow-500"
+                          }`}
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (produto.estoque / produto.estoqueMinimo) * 100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate("/produtos")}
+                      >
+                        Repor
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -260,11 +353,11 @@ const Dashboard = () => {
               )}
             </div>
             <div className="mt-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full" 
-                onClick={() => navigate('/produtos')}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => navigate("/produtos")}
               >
                 Ver todos os produtos
               </Button>
@@ -272,7 +365,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -285,32 +378,40 @@ const Dashboard = () => {
             {clientesComDivida.length > 0 ? (
               <div className="space-y-4">
                 {clientesComDivida.map((cliente) => (
-                  <div key={cliente.id} className="flex items-center justify-between">
+                  <div
+                    key={cliente.id}
+                    className="flex items-center justify-between"
+                  >
                     <div>
                       <p className="font-medium">{cliente.nome}</p>
-                      <p className="text-sm text-muted-foreground">{cliente.telefone}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {cliente.telefone}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-red-500">
-                        {cliente.pendingValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {cliente.pendingValue.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
                       </p>
-                      <Button 
-                        variant="link" 
-                        size="sm" 
+                      <Button
+                        variant="link"
+                        size="sm"
                         className="h-auto p-0"
-                        onClick={() => navigate('/clientes')}
+                        onClick={() => navigate("/clientes")}
                       >
                         Ver detalhes
                       </Button>
                     </div>
                   </div>
                 ))}
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full mt-2" 
-                  onClick={() => navigate('/clientes')}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={() => navigate("/clientes")}
                 >
                   Ver todos os clientes
                 </Button>
@@ -322,7 +423,7 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -336,7 +437,10 @@ const Dashboard = () => {
                 <div className="bg-muted/50 rounded-lg p-4">
                   <p className="text-sm font-medium mb-2">Total de Vendas</p>
                   <p className="text-2xl font-bold">
-                    {totalVendas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {totalVendas.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
                   </p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
@@ -352,12 +456,12 @@ const Dashboard = () => {
                   <p className="text-2xl font-bold">{totalClientes}</p>
                 </div>
               </div>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full" 
-                onClick={() => navigate('/relatorios')}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => navigate("/relatorios")}
               >
                 Ver relatórios completos
               </Button>

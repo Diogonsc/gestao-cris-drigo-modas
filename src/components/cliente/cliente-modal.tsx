@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
 import { Cliente, Compra } from "@/types";
-import { formatarMoeda, formatarData, formatarWhatsAppLink, formatarWhatsAppMensagem } from "@/utils/masks";
+import {
+  formatarMoeda,
+  formatarData,
+  formatarWhatsAppLink,
+  formatarWhatsAppMensagem,
+} from "@/utils/masks";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -10,13 +15,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FaPhone, FaFileAlt, FaCreditCard } from "react-icons/fa";
@@ -36,18 +41,35 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
   const [compras, setCompras] = useState<Compra[]>([]);
   const [compraAtual, setCompraAtual] = useState<Compra | null>(null);
   const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false);
-  
+
   // Carrega as compras do cliente quando o modal é aberto
   useEffect(() => {
     if (cliente) {
-      setCompras(getComprasPorCliente(cliente.id));
+      const comprasCliente = getComprasPorCliente(cliente.id);
+      // Ordena as compras por data, mais recente primeiro
+      setCompras(
+        comprasCliente.sort(
+          (a, b) =>
+            new Date(b.dataCompra).getTime() - new Date(a.dataCompra).getTime()
+        )
+      );
     }
   }, [cliente]);
-  
+
+  // Agrupa as compras por dia
+  const comprasPorDia = compras.reduce((acc, compra) => {
+    const data = new Date(compra.dataCompra).toLocaleDateString("pt-BR");
+    if (!acc[data]) {
+      acc[data] = [];
+    }
+    acc[data].push(compra);
+    return acc;
+  }, {} as Record<string, Compra[]>);
+
   if (!cliente) {
     return null;
   }
-  
+
   const handleGerarRecibo = async (compra: Compra) => {
     try {
       await gerarRecibo(cliente, compra);
@@ -63,33 +85,114 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
       });
     }
   };
-  
+
   const handleAbrirPagamento = (compra: Compra) => {
     setCompraAtual(compra);
     setModalPagamentoAberto(true);
   };
-  
+
   const handleRegistrarPagamento = (compraId: string, valor: number) => {
     const compraAtualizada = registrarPagamento(compraId, valor);
     if (compraAtualizada) {
       setCompras(getComprasPorCliente(cliente.id));
       toast({
         title: "Pagamento registrado",
-        description: `Pagamento de ${formatarMoeda(valor)} registrado com sucesso!`,
+        description: `Pagamento de ${formatarMoeda(
+          valor
+        )} registrado com sucesso!`,
       });
     }
     setModalPagamentoAberto(false);
   };
-  
+
   const getStatusCompra = (compra: Compra) => {
     switch (compra.status) {
-      case 'quitado': 
+      case "quitado":
         return <Badge className="bg-green-500">Quitado</Badge>;
-      case 'parcialmente_pago': 
+      case "parcialmente_pago":
         return <Badge className="bg-yellow-500">Parcialmente Pago</Badge>;
-      default: 
+      default:
         return <Badge className="bg-red-500">Em Aberto</Badge>;
     }
+  };
+
+  const handleEnviarCobranca = (compra: Compra) => {
+    const mensagem =
+      `Olá ${
+        cliente?.nome
+      }, gostaria de lembrar sobre o pagamento da compra realizada em ${formatarData(
+        compra.dataCompra
+      )}.\n\n` +
+      `Detalhes da compra:\n` +
+      `Compra #${compra.id}\n\n` +
+      `Produtos:\n` +
+      compra.produtos
+        .map(
+          (item) =>
+            `- ${item.produto.nome} (${item.quantidade}x ${formatarMoeda(
+              item.valorUnitario
+            )})`
+        )
+        .join("\n") +
+      "\n\n" +
+      `Valor total: ${formatarMoeda(compra.valorTotal)}\n` +
+      `Valor pago: ${formatarMoeda(compra.valorPago)}\n` +
+      `Valor pendente: ${formatarMoeda(
+        compra.valorTotal - compra.valorPago
+      )}\n\n` +
+      `Forma de pagamento: ${
+        compra.tipoPagamento === "avista"
+          ? "À vista"
+          : `${compra.numeroParcelas}x`
+      }\n\n` +
+      `Agradecemos a atenção!\n` +
+      `Para mais informações, entre em contato conosco.`;
+
+    const whatsappLink = `${formatarWhatsAppLink(
+      cliente?.whatsapp || ""
+    )}?text=${encodeURIComponent(mensagem)}`;
+    window.open(whatsappLink, "_blank");
+  };
+
+  const handleEnviarCupom = (compra: Compra) => {
+    const mensagem =
+      `Olá ${
+        cliente?.nome
+      }, segue o cupom fiscal da sua compra realizada em ${formatarData(
+        compra.dataCompra
+      )}.\n\n` +
+      `Cupom Fiscal - Compra #${compra.id}\n\n` +
+      `Produtos:\n` +
+      compra.produtos
+        .map(
+          (item) =>
+            `- ${item.produto.nome}\n` +
+            `  Quantidade: ${item.quantidade}\n` +
+            `  Valor unitário: ${formatarMoeda(item.valorUnitario)}\n` +
+            `  Subtotal: ${formatarMoeda(item.valorTotal)}`
+        )
+        .join("\n\n") +
+      "\n\n" +
+      `Subtotal: ${formatarMoeda(compra.valorTotal)}\n` +
+      `Forma de pagamento: ${
+        compra.tipoPagamento === "avista"
+          ? "À vista"
+          : `${compra.numeroParcelas}x`
+      }\n` +
+      `Status: ${
+        compra.status === "quitado"
+          ? "Quitado"
+          : compra.status === "parcialmente_pago"
+          ? "Parcialmente Pago"
+          : "Em Aberto"
+      }\n\n` +
+      `Agradecemos a preferência!\n` +
+      `Para mais informações, entre em contato conosco.`;
+
+    const whatsappLink = `${formatarWhatsAppLink(
+      cliente?.whatsapp || ""
+    )}?text=${encodeURIComponent(mensagem)}`;
+    window.open(whatsappLink, "_blank");
   };
 
   return (
@@ -102,13 +205,13 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
               Informações completas do cliente e suas compras
             </DialogDescription>
           </DialogHeader>
-          
+
           <Tabs defaultValue="informacoes">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="informacoes">Dados Pessoais</TabsTrigger>
               <TabsTrigger value="compras">Compras</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="informacoes" className="space-y-4 mt-4">
               <Card>
                 <CardHeader>
@@ -132,7 +235,9 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                     <div className="flex items-center gap-2">
                       <p className="text-lg">{cliente.telefone}</p>
                       <a
-                        href={`${formatarWhatsAppLink(cliente.whatsapp)}?text=${formatarWhatsAppMensagem(cliente)}`}
+                        href={`${formatarWhatsAppLink(
+                          cliente.whatsapp
+                        )}?text=${formatarWhatsAppMensagem(cliente)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
@@ -143,7 +248,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Endereço</CardTitle>
@@ -181,7 +286,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Situação Financeira</CardTitle>
@@ -190,13 +295,21 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-sm font-medium">Valor Pendente:</p>
-                      <p className={`text-xl font-bold ${cliente.pendingValue > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                      <p
+                        className={`text-xl font-bold ${
+                          cliente.pendingValue > 0
+                            ? "text-red-500"
+                            : "text-green-500"
+                        }`}
+                      >
                         {formatarMoeda(cliente.pendingValue)}
                       </p>
                     </div>
                     {cliente.pendingValue > 0 && (
                       <a
-                        href={`${formatarWhatsAppLink(cliente.whatsapp)}?text=${formatarWhatsAppMensagem(cliente)}`}
+                        href={`${formatarWhatsAppLink(
+                          cliente.whatsapp
+                        )}?text=${formatarWhatsAppMensagem(cliente)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white"
@@ -209,84 +322,160 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="compras" className="mt-4">
-              {compras.length > 0 ? (
-                <div className="space-y-4">
-                  {compras.map((compra) => (
-                    <Card key={compra.id}>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center">
-                          <CardTitle>Compra de {formatarData(compra.dataCompra)}</CardTitle>
-                          {getStatusCompra(compra)}
-                        </div>
-                        <CardDescription>
-                          {compra.tipoPagamento === 'avista' ? 'Pagamento à vista' : `Parcelado em ${compra.numeroParcelas}x`}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-5 font-medium text-sm">
-                            <span>Produto</span>
-                            <span className="text-right">Preço</span>
-                            <span className="text-right">Qtd</span>
-                            <span className="text-right">Total</span>
-                          </div>
-                          {compra.produtos.map((item, index) => (
-                            <div key={index} className="grid grid-cols-5 text-sm border-b pb-1">
-                              <span>{item.produto.nome}</span>
-                              <span className="text-right">{formatarMoeda(item.valorUnitario)}</span>
-                              <span className="text-right">{item.quantidade}</span>
-                              <span className="text-right">{formatarMoeda(item.valorTotal)}</span>
+              {Object.entries(comprasPorDia).length > 0 ? (
+                <div className="space-y-6">
+                  {Object.entries(comprasPorDia).map(([data, comprasDoDia]) => (
+                    <div key={data} className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">
+                        {data}
+                      </h3>
+                      {comprasDoDia.map((compra) => (
+                        <Card key={compra.id}>
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <CardTitle className="text-base">
+                                  Compra #{compra.id}
+                                </CardTitle>
+                                <CardDescription>
+                                  {compra.tipoPagamento === "avista"
+                                    ? "Pagamento à vista"
+                                    : `Parcelado em ${compra.numeroParcelas}x`}
+                                </CardDescription>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {getStatusCompra(compra)}
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex items-center gap-1"
+                                    onClick={() => handleEnviarCupom(compra)}
+                                  >
+                                    <FaFileAlt className="h-4 w-4" />
+                                    Cupom
+                                  </Button>
+                                  {compra.status !== "quitado" && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex items-center gap-1 bg-green-500 text-white hover:bg-green-600"
+                                      onClick={() =>
+                                        handleEnviarCobranca(compra)
+                                      }
+                                    >
+                                      <FaPhone className="h-4 w-4" />
+                                      Cobrar
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          ))}
-                          <div className="flex flex-col md:flex-row justify-between mt-4 pt-2">
-                            <div className="space-y-1 mb-4 md:mb-0">
-                              <div className="flex gap-2">
-                                <span className="text-sm font-medium">Valor Total:</span>
-                                <span className="text-sm">{formatarMoeda(compra.valorTotal)}</span>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-5 font-medium text-sm border-b pb-2">
+                                <span>Produto</span>
+                                <span className="text-right">Preço</span>
+                                <span className="text-right">Qtd</span>
+                                <span className="text-right">Total</span>
+                                <span></span>
                               </div>
-                              <div className="flex gap-2">
-                                <span className="text-sm font-medium">Valor Pago:</span>
-                                <span className="text-sm">{formatarMoeda(compra.valorPago)}</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <span className="text-sm font-medium">Valor Pendente:</span>
-                                <span className={`text-sm font-bold ${compra.valorTotal - compra.valorPago > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                  {formatarMoeda(compra.valorTotal - compra.valorPago)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {compra.status !== 'quitado' && (
-                                <Button 
-                                  variant="default" 
-                                  size="sm" 
-                                  className="flex items-center gap-1"
-                                  onClick={() => handleAbrirPagamento(compra)}
+                              {compra.produtos.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="grid grid-cols-5 text-sm border-b pb-2"
                                 >
-                                  <FaCreditCard className="h-4 w-4" /> Registrar Pagamento
-                                </Button>
-                              )}
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex items-center gap-1"
-                                onClick={() => handleGerarRecibo(compra)}
-                              >
-                                <FaFileAlt className="h-4 w-4" /> Gerar Recibo
-                              </Button>
+                                  <span className="font-medium">
+                                    {item.produto.nome}
+                                  </span>
+                                  <span className="text-right">
+                                    {formatarMoeda(item.valorUnitario)}
+                                  </span>
+                                  <span className="text-right">
+                                    {item.quantidade}
+                                  </span>
+                                  <span className="text-right font-medium">
+                                    {formatarMoeda(item.valorTotal)}
+                                  </span>
+                                  <span></span>
+                                </div>
+                              ))}
+                              <div className="flex justify-between items-center pt-2">
+                                <div className="space-y-1">
+                                  <div className="flex gap-2">
+                                    <span className="text-sm font-medium">
+                                      Total:
+                                    </span>
+                                    <span className="text-sm font-bold">
+                                      {formatarMoeda(compra.valorTotal)}
+                                    </span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="text-sm font-medium">
+                                      Pago:
+                                    </span>
+                                    <span className="text-sm text-green-600">
+                                      {formatarMoeda(compra.valorPago)}
+                                    </span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="text-sm font-medium">
+                                      Pendente:
+                                    </span>
+                                    <span
+                                      className={`text-sm font-bold ${
+                                        compra.valorTotal - compra.valorPago > 0
+                                          ? "text-red-500"
+                                          : "text-green-500"
+                                      }`}
+                                    >
+                                      {formatarMoeda(
+                                        compra.valorTotal - compra.valorPago
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  {compra.status !== "quitado" && (
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      className="flex items-center gap-1"
+                                      onClick={() =>
+                                        handleAbrirPagamento(compra)
+                                      }
+                                    >
+                                      <FaCreditCard className="h-4 w-4" />
+                                      Registrar Pagamento
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex items-center gap-1"
+                                    onClick={() => handleGerarRecibo(compra)}
+                                  >
+                                    <FaFileAlt className="h-4 w-4" />
+                                    Recibo
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   ))}
                 </div>
               ) : (
                 <Card>
                   <CardContent className="pt-6 text-center">
-                    <p className="text-muted-foreground">Este cliente ainda não realizou compras.</p>
+                    <p className="text-muted-foreground">
+                      Este cliente ainda não realizou compras.
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -294,7 +483,7 @@ export function ClienteModal({ cliente, open, onClose }: ClienteModalProps) {
           </Tabs>
         </DialogContent>
       </Dialog>
-      
+
       {compraAtual && (
         <RegistroPagamentoModal
           compra={compraAtual}

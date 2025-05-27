@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Filter, Pencil, Trash2 } from "lucide-react";
+import { ExportButton } from "@/components/ui/export-button";
 import {
   Table,
   TableBody,
@@ -24,7 +25,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ProdutoForm } from "@/components/produto/produto-form";
 import { EstoqueManager } from "@/components/produto/estoque-manager";
 import { EstoqueAlerts } from "@/components/produto/estoque-alerts";
@@ -41,7 +47,9 @@ const Produtos = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState<Produto | undefined>();
   const [produtos, setProdutos] = useState<Produto[]>(getProdutos());
-  const [selectedTab, setSelectedTab] = useState<"detalhes" | "estoque">("detalhes");
+  const [selectedTab, setSelectedTab] = useState<"detalhes" | "estoque">(
+    "detalhes"
+  );
 
   const filteredProducts = produtos.filter(
     (product) =>
@@ -67,6 +75,19 @@ const Produtos = () => {
     setSelectedProduto(undefined);
   };
 
+  const headers = ["Nome", "SKU", "Categoria", "Preço", "Estoque"];
+
+  const exportData = filteredProducts.map((product) => ({
+    nome: product.nome,
+    sku: product.sku,
+    categoria: product.categoria,
+    preço: product.preco.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }),
+    estoque: product.estoque,
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -76,9 +97,17 @@ const Produtos = () => {
             Gerencie seu estoque e cadastro de produtos
           </p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Produto
-        </Button>
+        <div className="flex gap-2">
+          <ExportButton
+            data={exportData}
+            filename="produtos"
+            headers={headers}
+            disabled={filteredProducts.length === 0}
+          />
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Novo Produto
+          </Button>
+        </div>
       </div>
 
       <EstoqueAlerts />
@@ -133,11 +162,16 @@ const Produtos = () => {
               <TableBody>
                 {filteredProducts.map((product) => (
                   <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.nome}</TableCell>
+                    <TableCell className="font-medium">
+                      {product.nome}
+                    </TableCell>
                     <TableCell>{product.sku}</TableCell>
                     <TableCell>{product.categoria}</TableCell>
                     <TableCell className="text-right">
-                      {product.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {product.preco.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -172,7 +206,10 @@ const Produtos = () => {
                 ))}
                 {filteredProducts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center h-32 text-muted-foreground">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center h-32 text-muted-foreground"
+                    >
                       Nenhum produto encontrado.
                     </TableCell>
                   </TableRow>
@@ -190,7 +227,12 @@ const Produtos = () => {
               {selectedProduto ? "Editar Produto" : "Novo Produto"}
             </DialogTitle>
           </DialogHeader>
-          <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as "detalhes" | "estoque")}>
+          <Tabs
+            value={selectedTab}
+            onValueChange={(value) =>
+              setSelectedTab(value as "detalhes" | "estoque")
+            }
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
               <TabsTrigger value="estoque">Estoque</TabsTrigger>
