@@ -1,17 +1,53 @@
-import { UserCircle, EllipsisVertical } from "lucide-react";
-
+import { UserCircle, EllipsisVertical, LogOut } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { useNavigate } from "react-router-dom";
 
 export function UserInfo() {
+  const navigate = useNavigate();
+  const nome = "Diogo Nascimento";
+  const iniciais = nome
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
+  const handleLogout = () => {
+    // Aqui você pode adicionar a lógica de logout, como limpar o token, etc
+    navigate("/login");
+  };
+
   return (
     <div className="flex items-center justify-between gap-2">
-      <img src="https://github.com/diogonsc.png" alt="Diogo Nascimento" className="h-10 w-10 rounded-full" />
+      <Avatar>
+        <AvatarImage src="https://github.com/diogonsc.png" alt={nome} />
+        <AvatarFallback>{iniciais}</AvatarFallback>
+      </Avatar>
       <div className="text-sm flex-1">
-        <p className="font-medium">Diogo Nascimento</p>
+        <p className="font-medium">{nome}</p>
         <p className="text-muted-foreground">Administrador</p>
       </div>
-      <div className="w-8 h-8 hover:bg-gray-500/50 cursor-pointer rounded-full flex items-center justify-center">
-        <EllipsisVertical className="h-4 w-4" />
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="w-8 h-8 hover:bg-gray-500/50 cursor-pointer rounded-full flex items-center justify-center">
+            <EllipsisVertical className="h-4 w-4" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="text-red-600 focus:text-red-600 cursor-pointer"
+            onClick={handleLogout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

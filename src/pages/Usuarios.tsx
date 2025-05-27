@@ -42,20 +42,22 @@ const Usuarios = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [usuarios, setUsuarios] = useState<Usuario[]>(getUsuarios());
-  const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(
+    null
+  );
   const [novoUsuario, setNovoUsuario] = useState({
     nome: "",
     email: "",
     funcao: "visualizador" as "admin" | "vendedor" | "visualizador",
   });
   const [modalAberto, setModalAberto] = useState(false);
-  
+
   const filteredUsuarios = usuarios.filter(
     (usuario) =>
       usuario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       usuario.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
   const handleAbrirModal = (usuario?: Usuario) => {
     if (usuario) {
       setUsuarioSelecionado(usuario);
@@ -74,15 +76,15 @@ const Usuarios = () => {
     }
     setModalAberto(true);
   };
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNovoUsuario((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   const handleSalvarUsuario = () => {
     const { nome, email, funcao } = novoUsuario;
-    
+
     if (!nome || !email) {
       toast({
         title: "Campos obrigatórios",
@@ -91,52 +93,54 @@ const Usuarios = () => {
       });
       return;
     }
-    
+
     if (usuarioSelecionado) {
       // Atualizar usuário
       const updatedUsuarios = usuarios.map((u) =>
-        u.id === usuarioSelecionado.id
-          ? { ...u, nome, email, funcao }
-          : u
+        u.id === usuarioSelecionado.id ? { ...u, nome, email, funcao } : u
       );
       setUsuarios(updatedUsuarios);
-      
+
       toast({
         title: "Usuário atualizado",
         description: "As informações do usuário foram atualizadas.",
       });
     } else {
       // Adicionar novo usuário com senha padrão
-      const novoId = `u${usuarios.length + 1}`;
+      const novoId = `u${String(usuarios.length + 1)}`;
       const senhaPadrao = "123456"; // Senha padrão
-      setUsuarios([...usuarios, { 
-        id: novoId, 
-        nome, 
-        email, 
-        funcao,
-        senha: senhaPadrao,
-        precisaTrocarSenha: true
-      }]);
-      
+      setUsuarios([
+        ...usuarios,
+        {
+          id: novoId,
+          nome,
+          email,
+          funcao,
+          senha: senhaPadrao,
+          precisaTrocarSenha: true,
+        },
+      ]);
+
       toast({
         title: "Usuário adicionado",
-        description: "O novo usuário foi adicionado com sucesso. A senha padrão é 123456 e será necessário trocá-la no primeiro acesso.",
+        description:
+          "O novo usuário foi adicionado com sucesso. A senha padrão é 123456 e será necessário trocá-la no primeiro acesso.",
       });
     }
-    
+
     setModalAberto(false);
   };
-  
+
   const handleExcluirUsuario = (id: string) => {
     const updatedUsuarios = usuarios.filter((u) => u.id !== id);
     setUsuarios(updatedUsuarios);
-    
+
     toast({
       title: "Usuário excluído",
       description: "O usuário foi excluído com sucesso.",
     });
   };
-  
+
   const getFuncaoBadge = (funcao: string) => {
     switch (funcao) {
       case "admin":
@@ -157,7 +161,11 @@ const Usuarios = () => {
             Gerencie os usuários do sistema
           </p>
         </div>
-        <Button onClick={() => handleAbrirModal()}>
+        <Button
+          onClick={() => {
+            handleAbrirModal();
+          }}
+        >
           <FaPlus className="mr-2 h-4 w-4" /> Novo Usuário
         </Button>
       </div>
@@ -176,7 +184,9 @@ const Usuarios = () => {
               placeholder="Buscar usuários..."
               className="pl-8"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+              }}
             />
           </div>
 
@@ -194,7 +204,9 @@ const Usuarios = () => {
                 {filteredUsuarios.length > 0 ? (
                   filteredUsuarios.map((usuario) => (
                     <TableRow key={usuario.id}>
-                      <TableCell className="font-medium">{usuario.nome}</TableCell>
+                      <TableCell className="font-medium">
+                        {usuario.nome}
+                      </TableCell>
                       <TableCell>{usuario.email}</TableCell>
                       <TableCell>{getFuncaoBadge(usuario.funcao)}</TableCell>
                       <TableCell className="text-right">
@@ -202,14 +214,18 @@ const Usuarios = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleAbrirModal(usuario)}
+                            onClick={() => {
+                              handleAbrirModal(usuario);
+                            }}
                           >
                             <FaEdit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleExcluirUsuario(usuario.id)}
+                            onClick={() => {
+                              handleExcluirUsuario(usuario.id);
+                            }}
                             disabled={usuario.funcao === "admin"} // Não permitir excluir o admin
                           >
                             <FaTrash className="h-4 w-4 text-red-500" />
@@ -220,7 +236,10 @@ const Usuarios = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center h-32 text-muted-foreground">
+                    <TableCell
+                      colSpan={4}
+                      className="text-center h-32 text-muted-foreground"
+                    >
                       Nenhum usuário encontrado.
                     </TableCell>
                   </TableRow>
@@ -269,7 +288,11 @@ const Usuarios = () => {
               <Label htmlFor="funcao">Função</Label>
               <Select
                 value={novoUsuario.funcao}
-                onValueChange={(value) => setNovoUsuario((prev) => ({ ...prev, funcao: value as any }))}
+                onValueChange={(
+                  value: "admin" | "vendedor" | "visualizador"
+                ) => {
+                  setNovoUsuario((prev) => ({ ...prev, funcao: value }));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -283,7 +306,12 @@ const Usuarios = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalAberto(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setModalAberto(false);
+              }}
+            >
               Cancelar
             </Button>
             <Button onClick={handleSalvarUsuario}>
