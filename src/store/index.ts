@@ -644,20 +644,71 @@ export const useClienteStore = create<ClienteState>()(
 export const useProdutoStore = create<ProdutoState>()(
   persist(
     (set, get) => ({
-      produtos: [],
+      produtos: [
+        {
+          id: "1",
+          codigo: "P001",
+          nome: "Camisa Básica",
+          descricao: "Camisa básica de algodão",
+          categoria: "Vestuário",
+          precoCusto: 30,
+          precoVenda: 59.9,
+          margemLucro: 99.67,
+          estoque: 50,
+          estoqueMinimo: 10,
+          unidade: "UN",
+          codigoBarras: "7891234567890",
+          status: "ativo",
+          dataCadastro: new Date("2024-01-01"),
+          ultimaAtualizacao: new Date("2024-01-01"),
+        },
+        {
+          id: "2",
+          codigo: "P002",
+          nome: "Calça Jeans",
+          descricao: "Calça jeans skinny",
+          categoria: "Vestuário",
+          precoCusto: 45,
+          precoVenda: 89.9,
+          margemLucro: 99.78,
+          estoque: 30,
+          estoqueMinimo: 5,
+          unidade: "UN",
+          codigoBarras: "7891234567891",
+          status: "ativo",
+          dataCadastro: new Date("2024-01-02"),
+          ultimaAtualizacao: new Date("2024-01-02"),
+        },
+        {
+          id: "3",
+          codigo: "P003",
+          nome: "Vestido Floral",
+          descricao: "Vestido floral estampado",
+          categoria: "Vestuário",
+          precoCusto: 60,
+          precoVenda: 119.9,
+          margemLucro: 99.83,
+          estoque: 20,
+          estoqueMinimo: 3,
+          unidade: "UN",
+          codigoBarras: "7891234567892",
+          status: "ativo",
+          dataCadastro: new Date("2024-01-03"),
+          ultimaAtualizacao: new Date("2024-01-03"),
+        },
+      ],
       produtoAtual: null,
       isLoading: false,
       error: null,
       adicionarProduto: async (produto) => {
         try {
           set({ isLoading: true, error: null });
-          const response = await fetch("/api/produtos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(produto),
-          });
-          if (!response.ok) throw new Error("Erro ao adicionar produto");
-          const novoProduto = await response.json();
+          const novoProduto = {
+            ...produto,
+            id: crypto.randomUUID(),
+            dataCadastro: new Date(),
+            ultimaAtualizacao: new Date(),
+          };
           set((state) => ({ produtos: [...state.produtos, novoProduto] }));
         } catch (error) {
           set({
@@ -674,16 +725,15 @@ export const useProdutoStore = create<ProdutoState>()(
       atualizarProduto: async (id, produtoAtualizado) => {
         try {
           set({ isLoading: true, error: null });
-          const response = await fetch(`/api/produtos/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(produtoAtualizado),
-          });
-          if (!response.ok) throw new Error("Erro ao atualizar produto");
-          const produtoAtualizado = await response.json();
           set((state) => ({
             produtos: state.produtos.map((p) =>
-              p.id === id ? produtoAtualizado : p
+              p.id === id
+                ? {
+                    ...p,
+                    ...produtoAtualizado,
+                    ultimaAtualizacao: new Date(),
+                  }
+                : p
             ),
           }));
         } catch (error) {
@@ -701,10 +751,6 @@ export const useProdutoStore = create<ProdutoState>()(
       removerProduto: async (id) => {
         try {
           set({ isLoading: true, error: null });
-          const response = await fetch(`/api/produtos/${id}`, {
-            method: "DELETE",
-          });
-          if (!response.ok) throw new Error("Erro ao remover produto");
           set((state) => ({
             produtos: state.produtos.filter((p) => p.id !== id),
           }));
@@ -732,71 +778,7 @@ export const useProdutoStore = create<ProdutoState>()(
       fetchProdutos: async () => {
         try {
           set({ isLoading: true, error: null });
-
-          // Em produção, usa dados mockados
-          if (import.meta.env.PROD) {
-            const mockProdutos = [
-              {
-                id: "1",
-                codigo: "P001",
-                nome: "Camisa Básica",
-                descricao: "Camisa básica de algodão",
-                categoria: "Vestuário",
-                precoCusto: 30,
-                precoVenda: 59.9,
-                margemLucro: 99.67,
-                estoque: 50,
-                estoqueMinimo: 10,
-                unidade: "UN",
-                codigoBarras: "7891234567890",
-                status: "ativo",
-                dataCadastro: new Date("2024-01-01"),
-                ultimaAtualizacao: new Date("2024-01-01"),
-              },
-              {
-                id: "2",
-                codigo: "P002",
-                nome: "Calça Jeans",
-                descricao: "Calça jeans skinny",
-                categoria: "Vestuário",
-                precoCusto: 45,
-                precoVenda: 89.9,
-                margemLucro: 99.78,
-                estoque: 30,
-                estoqueMinimo: 5,
-                unidade: "UN",
-                codigoBarras: "7891234567891",
-                status: "ativo",
-                dataCadastro: new Date("2024-01-02"),
-                ultimaAtualizacao: new Date("2024-01-02"),
-              },
-              {
-                id: "3",
-                codigo: "P003",
-                nome: "Vestido Floral",
-                descricao: "Vestido floral estampado",
-                categoria: "Vestuário",
-                precoCusto: 60,
-                precoVenda: 119.9,
-                margemLucro: 99.83,
-                estoque: 20,
-                estoqueMinimo: 3,
-                unidade: "UN",
-                codigoBarras: "7891234567892",
-                status: "ativo",
-                dataCadastro: new Date("2024-01-03"),
-                ultimaAtualizacao: new Date("2024-01-03"),
-              },
-            ];
-            set({ produtos: mockProdutos });
-            return mockProdutos;
-          }
-
-          // Em desenvolvimento, usa a API mockada
-          const response = await fetch("/api/produtos");
-          if (!response.ok) throw new Error("Erro ao carregar produtos");
-          const produtos = await response.json();
-          set({ produtos });
+          const produtos = get().produtos;
           return produtos;
         } catch (error) {
           set({
@@ -809,6 +791,41 @@ export const useProdutoStore = create<ProdutoState>()(
         } finally {
           set({ isLoading: false });
         }
+      },
+      atualizarEstoque: async (id, quantidade, tipo) => {
+        try {
+          set({ isLoading: true, error: null });
+          set((state) => ({
+            produtos: state.produtos.map((p) =>
+              p.id === id
+                ? {
+                    ...p,
+                    estoque:
+                      tipo === "entrada"
+                        ? p.estoque + quantidade
+                        : p.estoque - quantidade,
+                    ultimaAtualizacao: new Date(),
+                  }
+                : p
+            ),
+          }));
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao atualizar estoque",
+          });
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      buscarProdutoPorCodigo: (codigo) => {
+        return get().produtos.find((p) => p.codigo === codigo);
+      },
+      buscarProdutoPorCodigoBarras: (codigoBarras) => {
+        return get().produtos.find((p) => p.codigoBarras === codigoBarras);
       },
     }),
     {
