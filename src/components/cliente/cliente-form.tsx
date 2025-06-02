@@ -414,7 +414,15 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
               </div>
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onSuccess()}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading
                 ? "Salvando..."
