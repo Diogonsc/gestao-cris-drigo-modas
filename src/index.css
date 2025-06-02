@@ -95,6 +95,19 @@
     @apply bg-background text-foreground font-sans;
     font-family: "Inter", sans-serif;
   }
+
+  /* Estilo do hover dos cards */
+  .card-hover {
+    @apply transition-colors duration-200;
+  }
+
+  .card-hover:hover {
+    @apply bg-muted/30;
+  }
+
+  .dark .card-hover:hover {
+    @apply bg-muted/50;
+  }
 }
 
 .glass {
