@@ -59,15 +59,27 @@ export function UserInfo() {
               <span>Tema</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
-              <DropdownMenuItem onClick={() => setTheme("light")}>
+              <DropdownMenuItem
+                onClick={() => {
+                  setTheme("light");
+                }}
+              >
                 <Sun className="mr-2 h-4 w-4" />
                 <span>Claro</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>
+              <DropdownMenuItem
+                onClick={() => {
+                  setTheme("dark");
+                }}
+              >
                 <Moon className="mr-2 h-4 w-4" />
                 <span>Escuro</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")}>
+              <DropdownMenuItem
+                onClick={() => {
+                  setTheme("system");
+                }}
+              >
                 <Monitor className="mr-2 h-4 w-4" />
                 <span>Sistema</span>
               </DropdownMenuItem>
