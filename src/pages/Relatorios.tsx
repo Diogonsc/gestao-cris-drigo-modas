@@ -11,6 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, LineChart, PieChart, Download } from "lucide-react";
 import { DateRangeSelector } from "@/components/DateRangeSelector";
 import { useDateRange } from "@/context/date-range-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label, Input } from "@/components/ui/label";
 
 import {
   BarChart as RechartBarChart,
@@ -28,10 +36,10 @@ import {
   Cell,
 } from "recharts";
 
-import { 
-  getDadosVendasPorPeriodo, 
+import {
+  getDadosVendasPorPeriodo,
   getDadosProdutosMaisVendidos,
-  getDadosClientesMaisAtivos 
+  getDadosClientesMaisAtivos,
 } from "@/services/mockData";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
@@ -42,257 +50,165 @@ const Relatorios = () => {
   const dadosVendas = getDadosVendasPorPeriodo();
   const dadosProdutos = getDadosProdutosMaisVendidos();
   const dadosClientes = getDadosClientesMaisAtivos();
+  const [tipoRelatorio, setTipoRelatorio] = useState<TipoRelatorio>("vendas");
+  const [periodo, setPeriodo] = useState({
+    inicio: new Date(),
+    fim: new Date(),
+  });
+  const [relatorioVendas, setRelatorioVendas] =
+    useState<RelatorioVendas | null>(null);
 
-  const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
+  const handleDateRangeChange = (range: {
+    from: Date | undefined;
+    to: Date | undefined;
+  }) => {
     // TODO: Implement data filtering based on date range
   };
 
   const exportarCSV = (dados: any[], nomeArquivo: string) => {
     // Converter os dados para formato CSV
-    const headers = Object.keys(dados[0]).join(',');
-    const rows = dados.map(item => Object.values(item).join(','));
-    const csv = [headers, ...rows].join('\n');
-    
+    const headers = Object.keys(dados[0]).join(",");
+    const rows = dados.map((item) => Object.values(item).join(","));
+    const csv = [headers, ...rows].join("\n");
+
     // Criar o arquivo para download
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${nomeArquivo}.csv`);
-    link.style.visibility = 'hidden';
-    
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${nomeArquivo}.csv`);
+    link.style.visibility = "hidden";
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const handleGerarRelatorio = () => {
+    // Implemente a lógica para gerar o relatório
+  };
+
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
+          <p className="text-muted-foreground">
+            Visualize e analise os dados do seu negócio
+          </p>
+        </div>
       </div>
-      <div className="grid gap-4">
-        <DateRangeSelector />
-        <Tabs defaultValue="vendas" className="w-full">
-          <TabsList className="mb-4 grid grid-cols-1 md:grid-cols-3">
-            <TabsTrigger value="vendas">Vendas</TabsTrigger>
-            <TabsTrigger value="produtos">Produtos</TabsTrigger>
-            <TabsTrigger value="clientes">Clientes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="vendas" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle>Vendas no Período</CardTitle>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Relatórios Disponíveis</CardTitle>
+          <CardDescription>
+            Selecione o tipo de relatório e o período desejado
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="space-y-2">
+              <Label>Tipo de Relatório</Label>
+              <Select
+                value={tipoRelatorio}
+                onValueChange={(value) =>
+                  setTipoRelatorio(value as TipoRelatorio)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo de relatório" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vendas">Vendas</SelectItem>
+                  <SelectItem value="financeiro">Financeiro</SelectItem>
+                  <SelectItem value="estoque">Estoque</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {tipoRelatorio !== "estoque" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Data Inicial</Label>
+                  <Input
+                    type="date"
+                    value={periodo.inicio.toISOString().split("T")[0]}
+                    onChange={(e) =>
+                      setPeriodo((prev) => ({
+                        ...prev,
+                        inicio: new Date(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Data Final</Label>
+                  <Input
+                    type="date"
+                    value={periodo.fim.toISOString().split("T")[0]}
+                    onChange={(e) =>
+                      setPeriodo((prev) => ({
+                        ...prev,
+                        fim: new Date(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <Button onClick={handleGerarRelatorio} className="w-full md:w-auto">
+            Gerar Relatório
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Tabs
+        value={tipoRelatorio}
+        onValueChange={(value) => setTipoRelatorio(value as TipoRelatorio)}
+      >
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="vendas">Vendas</TabsTrigger>
+          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="estoque">Estoque</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="vendas">
+          {relatorioVendas && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total de Vendas</CardTitle>
                   <CardDescription>
-                    Desempenho das vendas nos últimos meses
+                    Período: {formatarData(relatorioVendas.periodo.inicio)} a{" "}
+                    {formatarData(relatorioVendas.periodo.fim)}
                   </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setTipoGrafico("bar")}
-                    className={tipoGrafico === "bar" ? "bg-muted" : ""}
-                  >
-                    <BarChart className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setTipoGrafico("line")}
-                    className={tipoGrafico === "line" ? "bg-muted" : ""}
-                  >
-                    <LineChart className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => exportarCSV(dadosVendas, "vendas_por_periodo")}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    {tipoGrafico === "bar" ? (
-                      <RechartBarChart data={dadosVendas} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="nome" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`R$ ${value}`, "Valor"]} />
-                        <Legend />
-                        <Bar dataKey="valor" name="Valor de Vendas" fill="#8884d8" />
-                      </RechartBarChart>
-                    ) : (
-                      <RechartLineChart data={dadosVendas} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="nome" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`R$ ${value}`, "Valor"]} />
-                        <Legend />
-                        <Line type="monotone" dataKey="valor" name="Valor de Vendas" stroke="#8884d8" activeDot={{ r: 8 }} />
-                      </RechartLineChart>
-                    )}
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="produtos" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle>Produtos Mais Vendidos</CardTitle>
-                  <CardDescription>
-                    Os produtos com maior volume de vendas
-                  </CardDescription>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => exportarCSV(dadosProdutos, "produtos_mais_vendidos")}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartPieChart>
-                      <Pie
-                        data={dadosProdutos}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ nome, quantidade, percent }) => `${nome}: ${quantidade} (${(percent * 100).toFixed(0)}%)`}
-                        outerRadius={150}
-                        fill="#8884d8"
-                        dataKey="quantidade"
-                        nameKey="nome"
-                      >
-                        {dadosProdutos.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value, name, props) => [`${value} unidades`, props.payload.nome]} />
-                      <Legend />
-                    </RechartPieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Movimentação de Estoque</CardTitle>
-                <CardDescription>
-                  Entradas e saídas de produtos do estoque
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartBarChart
-                    data={[
-                      { mes: "Jan", entradas: 20, saidas: 15 },
-                      { mes: "Fev", entradas: 30, saidas: 25 },
-                      { mes: "Mar", entradas: 15, saidas: 30 },
-                      { mes: "Abr", entradas: 25, saidas: 20 },
-                      { mes: "Mai", entradas: 35, saidas: 30 },
-                      { mes: "Jun", entradas: 40, saidas: 35 },
-                    ]}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="mes" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="entradas" name="Entradas" fill="#00C49F" />
-                    <Bar dataKey="saidas" name="Saídas" fill="#FF8042" />
-                  </RechartBarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="clientes" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle>Clientes Mais Ativos</CardTitle>
-                  <CardDescription>
-                    Clientes com mais compras realizadas
-                  </CardDescription>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => exportarCSV(dadosClientes, "clientes_mais_ativos")}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartBarChart
-                      data={dadosClientes}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="nome" type="category" width={150} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="compras" name="Número de Compras" fill="#8884d8" />
-                    </RechartBarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Clientes e Faturamento</CardTitle>
-                <CardDescription>
-                  Análise de receita por cliente
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartBarChart
-                    data={[
-                      { nome: "João Silva", compras: 8, valor: 2500 },
-                      { nome: "Maria Oliveira", compras: 6, valor: 3200 },
-                      { nome: "Ana Costa", compras: 5, valor: 1800 },
-                      { nome: "Carlos Ferreira", compras: 4, valor: 1200 },
-                      { nome: "Pedro Santos", compras: 2, valor: 700 },
-                    ]}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="nome" />
-                    <YAxis />
-                    <Tooltip formatter={(value, name) => [
-                      name === "valor" ? `R$ ${value}` : `${value} compras`,
-                      name === "valor" ? "Valor Total" : "Número de Compras"
-                    ]} />
-                    <Legend />
-                    <Bar dataKey="valor" name="Valor Total (R$)" fill="#0088FE" />
-                  </RechartBarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {relatorioVendas.totalVendas}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Valor Total: {formatarMoeda(relatorioVendas.valorTotal)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="financeiro">
+          {/* Implemente o conteúdo do tab financeiro */}
+        </TabsContent>
+
+        <TabsContent value="estoque">
+          {/* Implemente o conteúdo do tab estoque */}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

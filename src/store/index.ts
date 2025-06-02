@@ -451,6 +451,28 @@ export interface EstoqueState {
   setError: (error: string | null) => void;
 }
 
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  perfil: string;
+  status: "ativo" | "inativo";
+  ultimoAcesso: string;
+}
+
+interface UsuarioStore {
+  usuarios: Usuario[];
+  loading: boolean;
+  error: string | null;
+  fetchUsuarios: () => Promise<void>;
+  adicionarUsuario: (
+    usuario: Omit<Usuario, "id" | "ultimoAcesso">
+  ) => Promise<void>;
+  atualizarUsuario: (id: string, usuario: Partial<Usuario>) => Promise<void>;
+  removerUsuario: (id: string) => Promise<void>;
+  setError: (error: string | null) => void;
+}
+
 // Store de Autenticação
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -1438,3 +1460,102 @@ export const useEstoqueStore = create<EstoqueState>()(
     }
   )
 );
+
+export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
+  usuarios: [],
+  loading: false,
+  error: null,
+
+  fetchUsuarios: async () => {
+    try {
+      set({ loading: true, error: null });
+      // TODO: Implementar chamada à API
+      const response = await fetch("/api/usuarios");
+      const data = await response.json();
+      set({ usuarios: data, loading: false });
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : "Erro ao carregar usuários",
+        loading: false,
+      });
+    }
+  },
+
+  adicionarUsuario: async (usuario) => {
+    try {
+      set({ loading: true, error: null });
+      // TODO: Implementar chamada à API
+      const response = await fetch("/api/usuarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(usuario),
+      });
+      const data = await response.json();
+      set((state) => ({
+        usuarios: [...state.usuarios, data],
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : "Erro ao adicionar usuário",
+        loading: false,
+      });
+      throw error;
+    }
+  },
+
+  atualizarUsuario: async (id, usuario) => {
+    try {
+      set({ loading: true, error: null });
+      // TODO: Implementar chamada à API
+      const response = await fetch(`/api/usuarios/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(usuario),
+      });
+      const data = await response.json();
+      set((state) => ({
+        usuarios: state.usuarios.map((u) =>
+          u.id === id ? { ...u, ...data } : u
+        ),
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : "Erro ao atualizar usuário",
+        loading: false,
+      });
+      throw error;
+    }
+  },
+
+  removerUsuario: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      // TODO: Implementar chamada à API
+      await fetch(`/api/usuarios/${id}`, {
+        method: "DELETE",
+      });
+      set((state) => ({
+        usuarios: state.usuarios.filter((u) => u.id !== id),
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : "Erro ao remover usuário",
+        loading: false,
+      });
+      throw error;
+    }
+  },
+
+  setError: (error) => set({ error }),
+}));

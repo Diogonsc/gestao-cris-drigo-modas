@@ -1,6 +1,7 @@
 export interface Cliente {
   id: string;
   nome: string;
+  cpf: string;
   email: string;
   telefone: string;
   whatsapp: string;
@@ -20,15 +21,20 @@ export interface Endereco {
 
 export interface Produto {
   id: string;
+  codigo: string;
   nome: string;
-  sku: string;
-  preco: number;
-  estoque: number;
+  descricao: string;
   categoria: string;
+  precoCusto: number;
+  precoVenda: number;
+  margemLucro: number;
+  estoque: number;
   estoqueMinimo: number;
-  fornecedor?: string;
-  dataCadastro?: string;
-  dataAtualizacao?: string;
+  unidade: string;
+  codigoBarras?: string;
+  status: "ativo" | "inativo";
+  dataCadastro: Date;
+  ultimaAtualizacao: Date;
 }
 
 export interface ProdutoCompra {
@@ -44,10 +50,10 @@ export interface Compra {
   produtos: ProdutoCompra[];
   dataCompra: string;
   valorTotal: number;
-  tipoPagamento: 'avista' | 'parcelado';
+  tipoPagamento: "avista" | "parcelado";
   numeroParcelas: number;
   valorPago: number;
-  status: 'em_aberto' | 'parcialmente_pago' | 'quitado';
+  status: "em_aberto" | "parcialmente_pago" | "quitado";
 }
 
 export interface Pagamento {
@@ -61,7 +67,7 @@ export interface Usuario {
   id: string;
   nome: string;
   email: string;
-  funcao: 'admin' | 'vendedor' | 'visualizador';
+  funcao: "admin" | "vendedor" | "visualizador";
   senha?: string;
   precisaTrocarSenha?: boolean;
 }

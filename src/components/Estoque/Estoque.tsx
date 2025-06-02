@@ -38,7 +38,15 @@ import {
 } from "../ui/table";
 import { formatarData, formatarMoeda } from "../../lib/utils";
 import { useAuthStore } from "../../store";
-import { AlertCircle, Package, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  AlertCircle,
+  Package,
+  TrendingDown,
+  TrendingUp,
+  Plus,
+} from "lucide-react";
+import { Badge } from "../ui/badge";
+import { Search } from "lucide-react";
 
 export default function Estoque() {
   const [isLoading, setIsLoading] = useState(false);
@@ -55,6 +63,8 @@ export default function Estoque() {
   const [origem, setOrigem] = useState("");
   const [destino, setDestino] = useState("");
   const [documento, setDocumento] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { toast } = useToast();
   const { user } = useAuthStore();
@@ -215,6 +225,12 @@ export default function Estoque() {
     setDocumento("");
   };
 
+  const filteredMovimentacoes = movimentacoes.filter(
+    (mov) =>
+      mov.produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mov.motivo.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (isLoadingEstoque) {
     return <Loading text="Carregando estoque..." />;
   }
@@ -232,567 +248,297 @@ export default function Estoque() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Gestão de Estoque</h1>
-        <div className="space-x-2">
-          <Button onClick={() => setShowMovimentacaoDialog(true)}>
-            Nova Movimentação
-          </Button>
-          <Button variant="outline" onClick={() => setShowAjusteDialog(true)}>
-            Ajuste de Estoque
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowTransferenciaDialog(true)}
-          >
-            Transferência
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Estoque</h1>
+          <p className="text-muted-foreground">
+            Gerencie o estoque e acompanhe as movimentações de produtos
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nova Movimentação
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Produtos em Baixo Estoque
-              </p>
-              <h3 className="text-2xl font-bold">
-                {produtosBaixoEstoque.length}
-              </h3>
-            </div>
-            <TrendingDown className="h-8 w-8 text-orange-500" />
-          </div>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Movimentações de Estoque</CardTitle>
+          <CardDescription>
+            Registro de todas as movimentações de produtos
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="movimentacoes" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
+              <TabsTrigger value="ajustes">Ajustes</TabsTrigger>
+              <TabsTrigger value="transferencias">Transferências</TabsTrigger>
+              <TabsTrigger value="alertas">Alertas</TabsTrigger>
+            </TabsList>
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Produtos Sem Estoque
-              </p>
-              <h3 className="text-2xl font-bold">
-                {produtosSemEstoque.length}
-              </h3>
-            </div>
-            <AlertCircle className="h-8 w-8 text-red-500" />
-          </div>
-        </Card>
+            <TabsContent value="movimentacoes">
+              <div className="relative flex-1 mb-6">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar movimentações por produto ou motivo..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Total de Produtos</p>
-              <h3 className="text-2xl font-bold">{produtos.length}</h3>
-            </div>
-            <Package className="h-8 w-8 text-blue-500" />
-          </div>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="movimentacoes" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
-          <TabsTrigger value="ajustes">Ajustes</TabsTrigger>
-          <TabsTrigger value="transferencias">Transferências</TabsTrigger>
-          <TabsTrigger value="alertas">Alertas</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="movimentacoes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Movimentações</CardTitle>
-              <CardDescription>
-                Registro de todas as movimentações de estoque
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Quantidade</TableHead>
-                    <TableHead>Motivo</TableHead>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Documento</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {historicoMovimentacoes.map((movimentacao) => (
-                    <TableRow key={movimentacao.id}>
-                      <TableCell>{formatarData(movimentacao.data)}</TableCell>
-                      <TableCell>{movimentacao.produto.nome}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            movimentacao.tipo === "entrada"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {movimentacao.tipo === "entrada" ? (
-                            <TrendingUp className="w-4 h-4 mr-1" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 mr-1" />
-                          )}
-                          {movimentacao.tipo === "entrada"
-                            ? "Entrada"
-                            : "Saída"}
-                        </span>
-                      </TableCell>
-                      <TableCell>{movimentacao.quantidade}</TableCell>
-                      <TableCell>{movimentacao.motivo}</TableCell>
-                      <TableCell>{movimentacao.usuario.name}</TableCell>
-                      <TableCell>{movimentacao.documento || "-"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="ajustes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ajustes de Estoque</CardTitle>
-              <CardDescription>
-                Registro de ajustes realizados no estoque
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Quantidade Anterior</TableHead>
-                    <TableHead>Nova Quantidade</TableHead>
-                    <TableHead>Motivo</TableHead>
-                    <TableHead>Usuário</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ajustes.map((ajuste) => (
-                    <TableRow key={ajuste.id}>
-                      <TableCell>{formatarData(ajuste.data)}</TableCell>
-                      <TableCell>{ajuste.produto.nome}</TableCell>
-                      <TableCell>{ajuste.quantidadeAnterior}</TableCell>
-                      <TableCell>{ajuste.quantidadeNova}</TableCell>
-                      <TableCell>{ajuste.motivo}</TableCell>
-                      <TableCell>{ajuste.usuario.name}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="transferencias">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transferências</CardTitle>
-              <CardDescription>
-                Registro de transferências entre unidades
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Quantidade</TableHead>
-                    <TableHead>Origem</TableHead>
-                    <TableHead>Destino</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transferencias.map((transferencia) => (
-                    <TableRow key={transferencia.id}>
-                      <TableCell>{formatarData(transferencia.data)}</TableCell>
-                      <TableCell>{transferencia.produto.nome}</TableCell>
-                      <TableCell>{transferencia.quantidade}</TableCell>
-                      <TableCell>{transferencia.origem}</TableCell>
-                      <TableCell>{transferencia.destino}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            transferencia.status === "concluida"
-                              ? "bg-green-100 text-green-800"
-                              : transferencia.status === "pendente"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {transferencia.status === "concluida"
-                            ? "Concluída"
-                            : transferencia.status === "pendente"
-                            ? "Pendente"
-                            : "Cancelada"}
-                        </span>
-                      </TableCell>
-                      <TableCell>{transferencia.usuario.name}</TableCell>
-                      <TableCell>
-                        {transferencia.status === "pendente" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleConcluirTransferencia(transferencia.id)
-                            }
-                          >
-                            Concluir
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="alertas">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Produtos em Baixo Estoque</CardTitle>
-                <CardDescription>
-                  Produtos com estoque abaixo do mínimo
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+              <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Data</TableHead>
                       <TableHead>Produto</TableHead>
-                      <TableHead>Estoque Atual</TableHead>
-                      <TableHead>Estoque Mínimo</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Quantidade</TableHead>
+                      <TableHead>Motivo</TableHead>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Documento</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {produtosBaixoEstoque.map(
-                      ({ produto, estoqueAtual, estoqueMinimo }) => (
-                        <TableRow key={produto.id}>
-                          <TableCell>{produto.nome}</TableCell>
-                          <TableCell>{estoqueAtual}</TableCell>
-                          <TableCell>{estoqueMinimo}</TableCell>
-                          <TableCell>
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              <AlertCircle className="w-4 h-4 mr-1" />
-                              Baixo Estoque
-                            </span>
+                    {filteredMovimentacoes.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="text-center h-32 text-muted-foreground"
+                        >
+                          Nenhuma movimentação encontrada.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredMovimentacoes.map((mov) => (
+                        <TableRow key={mov.id}>
+                          <TableCell>{formatarData(mov.data)}</TableCell>
+                          <TableCell className="font-medium">
+                            {mov.produto.nome}
                           </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                mov.tipo === "entrada"
+                                  ? "text-green-500 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800"
+                                  : "text-red-500 border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800"
+                              }
+                            >
+                              {mov.tipo === "entrada" ? "Entrada" : "Saída"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{mov.quantidade}</TableCell>
+                          <TableCell>{mov.motivo}</TableCell>
+                          <TableCell>{mov.usuario}</TableCell>
+                          <TableCell>{mov.documento}</TableCell>
                         </TableRow>
-                      )
+                      ))
                     )}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
+              </div>
+            </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Produtos Sem Estoque</CardTitle>
-                <CardDescription>Produtos com estoque zerado</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {produtosSemEstoque.map((produto) => (
-                      <TableRow key={produto.id}>
-                        <TableCell>{produto.nome}</TableCell>
-                        <TableCell>{produto.codigo}</TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <AlertCircle className="w-4 h-4 mr-1" />
-                            Sem Estoque
-                          </span>
-                        </TableCell>
+            <TabsContent value="ajustes">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ajustes de Estoque</CardTitle>
+                  <CardDescription>
+                    Registro de ajustes realizados no estoque
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Quantidade Anterior</TableHead>
+                        <TableHead>Nova Quantidade</TableHead>
+                        <TableHead>Motivo</TableHead>
+                        <TableHead>Usuário</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                    </TableHeader>
+                    <TableBody>
+                      {ajustes.map((ajuste) => (
+                        <TableRow key={ajuste.id}>
+                          <TableCell>{formatarData(ajuste.data)}</TableCell>
+                          <TableCell>{ajuste.produto.nome}</TableCell>
+                          <TableCell>{ajuste.quantidadeAnterior}</TableCell>
+                          <TableCell>{ajuste.quantidadeNova}</TableCell>
+                          <TableCell>{ajuste.motivo}</TableCell>
+                          <TableCell>{ajuste.usuario.name}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-      {/* Dialog de Movimentação */}
-      <Dialog
-        open={showMovimentacaoDialog}
-        onOpenChange={setShowMovimentacaoDialog}
-      >
-        <DialogContent>
+            <TabsContent value="transferencias">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Transferências</CardTitle>
+                  <CardDescription>
+                    Registro de transferências entre unidades
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Quantidade</TableHead>
+                        <TableHead>Origem</TableHead>
+                        <TableHead>Destino</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Usuário</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transferencias.map((transferencia) => (
+                        <TableRow key={transferencia.id}>
+                          <TableCell>
+                            {formatarData(transferencia.data)}
+                          </TableCell>
+                          <TableCell>{transferencia.produto.nome}</TableCell>
+                          <TableCell>{transferencia.quantidade}</TableCell>
+                          <TableCell>{transferencia.origem}</TableCell>
+                          <TableCell>{transferencia.destino}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                transferencia.status === "concluida"
+                                  ? "text-green-500 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800"
+                                  : "text-yellow-500 border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800"
+                              }
+                            >
+                              {transferencia.status === "concluida"
+                                ? "Concluída"
+                                : "Pendente"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{transferencia.usuario.name}</TableCell>
+                          <TableCell>
+                            {transferencia.status === "pendente" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleConcluirTransferencia(transferencia.id)
+                                }
+                              >
+                                Concluir
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="alertas">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Produtos em Baixo Estoque</CardTitle>
+                    <CardDescription>
+                      Produtos com estoque abaixo do mínimo
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead>Estoque Atual</TableHead>
+                          <TableHead>Estoque Mínimo</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {produtosBaixoEstoque.map(
+                          ({ produto, estoqueAtual, estoqueMinimo }) => (
+                            <TableRow key={produto.id}>
+                              <TableCell>{produto.nome}</TableCell>
+                              <TableCell>{estoqueAtual}</TableCell>
+                              <TableCell>{estoqueMinimo}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className="text-orange-500 border-orange-200 bg-orange-50 dark:bg-orange-950 dark:border-orange-800"
+                                >
+                                  <AlertCircle className="w-4 h-4 mr-1" />
+                                  Baixo Estoque
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Produtos Sem Estoque</CardTitle>
+                    <CardDescription>
+                      Produtos com estoque zerado
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead>Código</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {produtosSemEstoque.map((produto) => (
+                          <TableRow key={produto.id}>
+                            <TableCell>{produto.nome}</TableCell>
+                            <TableCell>{produto.codigo}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className="text-red-500 border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800"
+                              >
+                                <AlertCircle className="w-4 h-4 mr-1" />
+                                Sem Estoque
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Nova Movimentação</DialogTitle>
-            <DialogDescription>
-              Registre uma nova movimentação de estoque
-            </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Produto</Label>
-              <Select
-                value={selectedProduto}
-                onValueChange={setSelectedProduto}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um produto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {produtos.map((produto) => (
-                    <SelectItem key={produto.id} value={produto.id}>
-                      {produto.nome} ({produto.codigo})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tipo de Movimentação</Label>
-              <Select
-                value={tipoMovimentacao}
-                onValueChange={(value: "entrada" | "saida") =>
-                  setTipoMovimentacao(value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="entrada">Entrada</SelectItem>
-                  <SelectItem value="saida">Saída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Quantidade</Label>
-              <Input
-                type="number"
-                value={quantidade}
-                onChange={(e) => setQuantidade(Number(e.target.value))}
-                min="1"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Motivo</Label>
-              <Input
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Ex: Compra de fornecedor, Venda, etc."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Documento</Label>
-              <Input
-                value={documento}
-                onChange={(e) => setDocumento(e.target.value)}
-                placeholder="Ex: Número da NF, etc."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Observações</Label>
-              <Input
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Observações adicionais"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowMovimentacaoDialog(false)}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleMovimentacao} disabled={isLoading}>
-              Registrar Movimentação
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog de Ajuste */}
-      <Dialog open={showAjusteDialog} onOpenChange={setShowAjusteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajuste de Estoque</DialogTitle>
-            <DialogDescription>
-              Realize um ajuste no estoque de um produto
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Produto</Label>
-              <Select
-                value={selectedProduto}
-                onValueChange={setSelectedProduto}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um produto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {produtos.map((produto) => (
-                    <SelectItem key={produto.id} value={produto.id}>
-                      {produto.nome} ({produto.codigo})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Nova Quantidade</Label>
-              <Input
-                type="number"
-                value={quantidade}
-                onChange={(e) => setQuantidade(Number(e.target.value))}
-                min="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Motivo do Ajuste</Label>
-              <Input
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Ex: Inventário, Correção, etc."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Observações</Label>
-              <Input
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Observações adicionais"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowAjusteDialog(false)}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleAjuste} disabled={isLoading}>
-              Realizar Ajuste
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog de Transferência */}
-      <Dialog
-        open={showTransferenciaDialog}
-        onOpenChange={setShowTransferenciaDialog}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nova Transferência</DialogTitle>
-            <DialogDescription>
-              Registre uma transferência de estoque entre unidades
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Produto</Label>
-              <Select
-                value={selectedProduto}
-                onValueChange={setSelectedProduto}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um produto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {produtos.map((produto) => (
-                    <SelectItem key={produto.id} value={produto.id}>
-                      {produto.nome} ({produto.codigo})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Quantidade</Label>
-              <Input
-                type="number"
-                value={quantidade}
-                onChange={(e) => setQuantidade(Number(e.target.value))}
-                min="1"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Origem</Label>
-              <Input
-                value={origem}
-                onChange={(e) => setOrigem(e.target.value)}
-                placeholder="Ex: Loja Principal"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Destino</Label>
-              <Input
-                value={destino}
-                onChange={(e) => setDestino(e.target.value)}
-                placeholder="Ex: Filial 1"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Observações</Label>
-              <Input
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Observações adicionais"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowTransferenciaDialog(false)}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleTransferencia} disabled={isLoading}>
-              Registrar Transferência
-            </Button>
-          </DialogFooter>
+          <FormMovimentacao onSuccess={handleFormSuccess} />
         </DialogContent>
       </Dialog>
     </div>

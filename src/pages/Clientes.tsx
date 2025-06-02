@@ -55,7 +55,7 @@ const Clientes = () => {
   };
 
   const handleNovoCliente = () => {
-    navigate("/clientes/novo");
+    navigate("/novo-cliente");
   };
 
   const handleEnviarCobranca = (cliente: Cliente) => {

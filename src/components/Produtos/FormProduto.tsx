@@ -10,7 +10,7 @@ import { Produto } from "../../store";
 import { Loading } from "../ui/loading";
 import { FormFeedback } from "../ui/form-feedback";
 import { DialogConfirm } from "../ui/dialog-confirm";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -18,11 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 const schemaProduto = z.object({
   codigo: z.string().min(1, "Código é obrigatório"),
   nome: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
-  descricao: z.string().min(5, "Descrição deve ter no mínimo 5 caracteres"),
+  descricao: z.string().min(3, "Descrição é obrigatória"),
   categoria: z.string().min(1, "Categoria é obrigatória"),
   precoCusto: z.number().min(0, "Preço de custo deve ser maior ou igual a 0"),
   precoVenda: z.number().min(0, "Preço de venda deve ser maior ou igual a 0"),
@@ -34,6 +42,7 @@ const schemaProduto = z.object({
   unidade: z.string().min(1, "Unidade é obrigatória"),
   codigoBarras: z.string().optional(),
   status: z.enum(["ativo", "inativo"]),
+  fornecedor: z.string().optional(),
 });
 
 type FormProdutoData = z.infer<typeof schemaProduto>;
@@ -45,8 +54,7 @@ interface FormProdutoProps {
 }
 
 const categorias = ["Vestuário", "Calçados", "Acessórios", "Bolsas", "Outros"];
-
-const unidades = ["UN", "PAR", "CX", "KG", "M"];
+const unidades = ["un", "kg", "m", "cm", "l", "par", "cx"];
 
 export function FormProduto({
   produto,
@@ -56,16 +64,14 @@ export function FormProduto({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const { toast } = useToast();
-  const { addProduto, updateProduto, setError } = useProdutoStore();
+  const { adicionarProduto, atualizarProduto, setError } = useProdutoStore();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors },
     reset,
-    watch,
     setValue,
-    trigger,
   } = useForm<FormProdutoData>({
     resolver: zodResolver(schemaProduto),
     defaultValues: produto || {
@@ -77,36 +83,27 @@ export function FormProduto({
       precoVenda: 0,
       margemLucro: 0,
       estoque: 0,
-      estoqueMinimo: 0,
-      unidade: "UN",
+      estoqueMinimo: 5,
+      unidade: "un",
       codigoBarras: "",
       status: "ativo",
+      fornecedor: "",
     },
-    mode: "onChange",
   });
-
-  // Calcula a margem de lucro quando o preço de custo ou venda muda
-  const precoCusto = watch("precoCusto");
-  const precoVenda = watch("precoVenda");
-
-  useEffect(() => {
-    if (precoCusto > 0 && precoVenda > 0) {
-      const margem = ((precoVenda - precoCusto) / precoCusto) * 100;
-      setValue("margemLucro", Number(margem.toFixed(2)));
-    }
-  }, [precoCusto, precoVenda, setValue]);
 
   const onSubmit = async (data: FormProdutoData) => {
     try {
       setIsSubmitting(true);
       if (produto) {
-        await updateProduto(produto.id, data);
+        await atualizarProduto(produto.id, data);
         toast({
           title: "Produto atualizado",
           description: "Os dados do produto foram atualizados com sucesso.",
         });
       } else {
-        await addProduto(data);
+        await adicionarProduto({
+          ...data,
+        });
         toast({
           title: "Produto cadastrado",
           description: "O produto foi cadastrado com sucesso.",
@@ -137,194 +134,208 @@ export function FormProduto({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto px-4"
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="codigo">Código</Label>
-          <Input
-            id="codigo"
-            {...register("codigo")}
-            error={errors.codigo?.message}
-          />
-          <FormFeedback error={errors.codigo?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="codigoBarras">Código de Barras</Label>
-          <Input
-            id="codigoBarras"
-            {...register("codigoBarras")}
-            error={errors.codigoBarras?.message}
-          />
-          <FormFeedback error={errors.codigoBarras?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="nome">Nome</Label>
-          <Input id="nome" {...register("nome")} error={errors.nome?.message} />
-          <FormFeedback error={errors.nome?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="categoria">Categoria</Label>
-          <Select
-            defaultValue={produto?.categoria}
-            onValueChange={(value) => setValue("categoria", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              {categorias.map((categoria) => (
-                <SelectItem key={categoria} value={categoria}>
-                  {categoria}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormFeedback error={errors.categoria?.message} />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="descricao">Descrição</Label>
-          <Input
-            id="descricao"
-            {...register("descricao")}
-            error={errors.descricao?.message}
-          />
-          <FormFeedback error={errors.descricao?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="precoCusto">Preço de Custo</Label>
-          <Input
-            id="precoCusto"
-            type="number"
-            step="0.01"
-            {...register("precoCusto", { valueAsNumber: true })}
-            error={errors.precoCusto?.message}
-          />
-          <FormFeedback error={errors.precoCusto?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="precoVenda">Preço de Venda</Label>
-          <Input
-            id="precoVenda"
-            type="number"
-            step="0.01"
-            {...register("precoVenda", { valueAsNumber: true })}
-            error={errors.precoVenda?.message}
-          />
-          <FormFeedback error={errors.precoVenda?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="margemLucro">Margem de Lucro (%)</Label>
-          <Input
-            id="margemLucro"
-            type="number"
-            step="0.01"
-            disabled
-            {...register("margemLucro", { valueAsNumber: true })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="unidade">Unidade</Label>
-          <Select
-            defaultValue={produto?.unidade || "UN"}
-            onValueChange={(value) => setValue("unidade", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma unidade" />
-            </SelectTrigger>
-            <SelectContent>
-              {unidades.map((unidade) => (
-                <SelectItem key={unidade} value={unidade}>
-                  {unidade}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormFeedback error={errors.unidade?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="estoque">Estoque Atual</Label>
-          <Input
-            id="estoque"
-            type="number"
-            {...register("estoque", { valueAsNumber: true })}
-            error={errors.estoque?.message}
-          />
-          <FormFeedback error={errors.estoque?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
-          <Input
-            id="estoqueMinimo"
-            type="number"
-            {...register("estoqueMinimo", { valueAsNumber: true })}
-            error={errors.estoqueMinimo?.message}
-          />
-          <FormFeedback error={errors.estoqueMinimo?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select
-            defaultValue={produto?.status || "ativo"}
-            onValueChange={(value) =>
-              setValue("status", value as "ativo" | "inativo")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="inativo">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
-          <FormFeedback error={errors.status?.message} />
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2 sticky bottom-0 bg-background pt-4 border-t mt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? (
-            <Loading size="sm" text="Salvando..." />
-          ) : produto ? (
-            "Atualizar"
-          ) : (
-            "Cadastrar"
-          )}
-        </Button>
-      </div>
-
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {produto ? "Editar Produto" : "Cadastro de Produto"}
+        </CardTitle>
+        <CardDescription>
+          {produto
+            ? "Atualize as informações do produto"
+            : "Preencha os dados para cadastrar um novo produto"}
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="codigo">Código</Label>
+              <Input
+                id="codigo"
+                {...register("codigo")}
+                error={errors.codigo?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.codigo?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                {...register("nome")}
+                error={errors.nome?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.nome?.message} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="descricao">Descrição</Label>
+              <Input
+                id="descricao"
+                {...register("descricao")}
+                error={errors.descricao?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.descricao?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="categoria">Categoria</Label>
+              <Select
+                defaultValue={produto?.categoria}
+                onValueChange={(value) => setValue("categoria", value)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categorias.map((categoria) => (
+                    <SelectItem key={categoria} value={categoria}>
+                      {categoria}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormFeedback error={errors.categoria?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unidade">Unidade</Label>
+              <Select
+                defaultValue={produto?.unidade || "un"}
+                onValueChange={(value) => setValue("unidade", value)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {unidades.map((unidade) => (
+                    <SelectItem key={unidade} value={unidade}>
+                      {unidade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormFeedback error={errors.unidade?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="precoCusto">Preço de Custo</Label>
+              <Input
+                id="precoCusto"
+                type="number"
+                step="0.01"
+                {...register("precoCusto", { valueAsNumber: true })}
+                error={errors.precoCusto?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.precoCusto?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="precoVenda">Preço de Venda</Label>
+              <Input
+                id="precoVenda"
+                type="number"
+                step="0.01"
+                {...register("precoVenda", { valueAsNumber: true })}
+                error={errors.precoVenda?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.precoVenda?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="margemLucro">Margem de Lucro (%)</Label>
+              <Input
+                id="margemLucro"
+                type="number"
+                step="0.01"
+                {...register("margemLucro", { valueAsNumber: true })}
+                error={errors.margemLucro?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.margemLucro?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="estoque">Estoque</Label>
+              <Input
+                id="estoque"
+                type="number"
+                {...register("estoque", { valueAsNumber: true })}
+                error={errors.estoque?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.estoque?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
+              <Input
+                id="estoqueMinimo"
+                type="number"
+                {...register("estoqueMinimo", { valueAsNumber: true })}
+                error={errors.estoqueMinimo?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.estoqueMinimo?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="codigoBarras">Código de Barras</Label>
+              <Input
+                id="codigoBarras"
+                {...register("codigoBarras")}
+                error={errors.codigoBarras?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.codigoBarras?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                defaultValue={produto?.status || "ativo"}
+                onValueChange={(value) =>
+                  setValue("status", value as "ativo" | "inativo")
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormFeedback error={errors.status?.message} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="fornecedor">Fornecedor</Label>
+              <Input
+                id="fornecedor"
+                {...register("fornecedor")}
+                error={errors.fornecedor?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.fornecedor?.message} />
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-end gap-2 border-t bg-background">
+          <Button type="button" variant="outline" onClick={handleCancel}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Salvando..." : produto ? "Salvar" : "Criar"}
+          </Button>
+        </CardFooter>
+      </form>
       <DialogConfirm
         open={showConfirmCancel}
         onOpenChange={setShowConfirmCancel}
-        title="Cancelar cadastro"
-        description="Existem dados não salvos. Deseja realmente cancelar?"
+        title="Descartar alterações?"
+        description="Você tem alterações não salvas. Tem certeza que deseja descartá-las?"
         onConfirm={() => {
           setShowConfirmCancel(false);
           onCancel?.();
         }}
       />
-    </form>
+    </Card>
   );
 }

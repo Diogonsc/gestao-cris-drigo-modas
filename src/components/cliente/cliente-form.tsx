@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { CustomFormField } from "@/components/form-field";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Cliente } from "@/types";
 import { buscarCep } from "@/services/enderecoService";
 import { adicionarCliente, atualizarCliente } from "@/services/mockData";
@@ -16,6 +23,7 @@ import InputMask from "react-input-mask";
 // Schema de validação
 const clienteSchema = z.object({
   nome: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+  cpf: z.string().min(11, { message: "CPF inválido" }),
   email: z.string().email({ message: "Email inválido" }),
   telefone: z.string().min(14, { message: "Telefone inválido" }),
   whatsapp: z.string().min(14, { message: "WhatsApp inválido" }),
@@ -27,7 +35,7 @@ const clienteSchema = z.object({
     bairro: z.string().min(3, { message: "Bairro obrigatório" }),
     cidade: z.string().min(3, { message: "Cidade obrigatória" }),
     estado: z.string().min(2, { message: "Estado obrigatório" }),
-  })
+  }),
 });
 
 type ClienteFormData = z.infer<typeof clienteSchema>;
@@ -43,23 +51,24 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
 
   const form = useForm<ClienteFormData>({
     resolver: zodResolver(clienteSchema),
-    defaultValues: cliente ?
-      { ...cliente } :
-      {
-        nome: "",
-        email: "",
-        telefone: "",
-        whatsapp: "",
-        endereco: {
-          cep: "",
-          logradouro: "",
-          numero: "",
-          complemento: "",
-          bairro: "",
-          cidade: "",
-          estado: ""
-        }
-      },
+    defaultValues: cliente
+      ? { ...cliente }
+      : {
+          nome: "",
+          cpf: "",
+          email: "",
+          telefone: "",
+          whatsapp: "",
+          endereco: {
+            cep: "",
+            logradouro: "",
+            numero: "",
+            complemento: "",
+            bairro: "",
+            cidade: "",
+            estado: "",
+          },
+        },
   });
 
   const handleSubmit = async (data: ClienteFormData) => {
@@ -69,9 +78,11 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       const telefone = data.telefone.replace(/\D/g, "");
       const whatsapp = data.whatsapp.replace(/\D/g, "");
       const cep = data.endereco.cep.replace(/\D/g, "");
+      const cpf = data.cpf.replace(/\D/g, "");
 
       const clienteData = {
         nome: data.nome,
+        cpf,
         email: data.email,
         telefone: data.telefone,
         whatsapp,
@@ -82,7 +93,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
           complemento: data.endereco.complemento,
           bairro: data.endereco.bairro,
           cidade: data.endereco.cidade,
-          estado: data.endereco.estado
+          estado: data.endereco.estado,
         },
         pendingValue: cliente?.pendingValue || 0,
       };
@@ -93,7 +104,8 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
 
         toast({
           title: "Cliente atualizado",
-          description: "As informações do cliente foram atualizadas com sucesso!",
+          description:
+            "As informações do cliente foram atualizadas com sucesso!",
         });
       } else {
         // Adicionar novo cliente
@@ -136,7 +148,8 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       } catch (error) {
         toast({
           title: "Erro ao buscar CEP",
-          description: "Não foi possível encontrar o endereço com este CEP. Verifique se o CEP está correto.",
+          description:
+            "Não foi possível encontrar o endereço com este CEP. Verifique se o CEP está correto.",
           variant: "destructive",
         });
       } finally {
@@ -148,7 +161,9 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{cliente ? "Editar Cliente" : "Cadastro de Cliente"}</CardTitle>
+        <CardTitle>
+          {cliente ? "Editar Cliente" : "Cadastro de Cliente"}
+        </CardTitle>
         <CardDescription>
           {cliente
             ? "Atualize as informações do cliente"
@@ -161,7 +176,9 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium">Informações Pessoais</h3>
-                <p className="text-sm text-muted-foreground">Dados básicos do cliente</p>
+                <p className="text-sm text-muted-foreground">
+                  Dados básicos do cliente
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -169,12 +186,37 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="nome"
                   label="Nome Completo"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <Input
                       {...field}
+                      ref={ref}
                       placeholder="Nome completo"
                       disabled={isLoading}
+                      autoComplete="name"
                     />
+                  )}
+                />
+                <CustomFormField
+                  name="cpf"
+                  label="CPF"
+                  control={form.control}
+                  render={({ field: { ref, ...field } }) => (
+                    <InputMask
+                      mask="999.999.999-99"
+                      maskChar={null}
+                      {...field}
+                      inputRef={ref}
+                      disabled={isLoading}
+                    >
+                      {(inputProps: any) => (
+                        <Input
+                          {...inputProps}
+                          placeholder="000.000.000-00"
+                          type="tel"
+                          autoComplete="off"
+                        />
+                      )}
+                    </InputMask>
                   )}
                 />
                 <CustomFormField
@@ -194,14 +236,22 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="telefone"
                   label="Telefone"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <InputMask
                       mask="(99) 99999-9999"
                       maskChar={null}
                       {...field}
-                      disabled={isLoading} // Passando disabled diretamente para InputMask
+                      inputRef={ref}
+                      disabled={isLoading}
                     >
-                      {(inputProps: any) => <Input {...inputProps} placeholder="(00) 00000-0000" />}
+                      {(inputProps: any) => (
+                        <Input
+                          {...inputProps}
+                          placeholder="(00) 00000-0000"
+                          type="tel"
+                          autoComplete="tel"
+                        />
+                      )}
                     </InputMask>
                   )}
                 />
@@ -209,14 +259,22 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="whatsapp"
                   label="WhatsApp"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <InputMask
                       mask="(99) 99999-9999"
                       maskChar={null}
                       {...field}
-                      disabled={isLoading} // Passando disabled diretamente para InputMask
+                      inputRef={ref}
+                      disabled={isLoading}
                     >
-                      {(inputProps: any) => <Input {...inputProps} placeholder="(00) 00000-0000" />}
+                      {(inputProps: any) => (
+                        <Input
+                          {...inputProps}
+                          placeholder="(00) 00000-0000"
+                          type="tel"
+                          autoComplete="tel"
+                        />
+                      )}
                     </InputMask>
                   )}
                 />
@@ -236,22 +294,24 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="endereco.cep"
                   label="CEP"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <InputMask
                       mask="99999-999"
                       maskChar={null}
-                      value={field.value}
-                      onChange={field.onChange}
+                      {...field}
+                      inputRef={ref}
                       onBlur={(e) => {
                         field.onBlur();
                         handleCepBlur();
                       }}
-                      disabled={isLoading} // Passando disabled diretamente para InputMask
+                      disabled={isLoading}
                     >
                       {(inputProps: any) => (
                         <Input
                           {...inputProps}
                           placeholder="00000-000"
+                          type="tel"
+                          autoComplete="postal-code"
                         />
                       )}
                     </InputMask>
@@ -262,11 +322,13 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                     name="endereco.logradouro"
                     label="Logradouro"
                     control={form.control}
-                    render={({ field }) => (
+                    render={({ field: { ref, ...field } }) => (
                       <Input
                         {...field}
+                        ref={ref}
                         placeholder="Rua, Avenida, etc"
                         disabled={isLoading}
+                        autoComplete="street-address"
                       />
                     )}
                   />
@@ -278,11 +340,13 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="endereco.numero"
                   label="Número"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <Input
                       {...field}
+                      ref={ref}
                       placeholder="123"
                       disabled={isLoading}
+                      autoComplete="address-line2"
                     />
                   )}
                 />
@@ -291,11 +355,13 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                     name="endereco.complemento"
                     label="Complemento"
                     control={form.control}
-                    render={({ field }) => (
+                    render={({ field: { ref, ...field } }) => (
                       <Input
                         {...field}
+                        ref={ref}
                         placeholder="Apto, Bloco, etc"
                         disabled={isLoading}
+                        autoComplete="address-line3"
                       />
                     )}
                   />
@@ -307,11 +373,13 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="endereco.bairro"
                   label="Bairro"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <Input
                       {...field}
+                      ref={ref}
                       placeholder="Bairro"
                       disabled={isLoading}
+                      autoComplete="address-level2"
                     />
                   )}
                 />
@@ -319,11 +387,13 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="endereco.cidade"
                   label="Cidade"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <Input
                       {...field}
+                      ref={ref}
                       placeholder="Cidade"
                       disabled={isLoading}
+                      autoComplete="address-level1"
                     />
                   )}
                 />
@@ -331,11 +401,13 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="endereco.estado"
                   label="Estado"
                   control={form.control}
-                  render={({ field }) => (
+                  render={({ field: { ref, ...field } }) => (
                     <Input
                       {...field}
+                      ref={ref}
                       placeholder="UF"
                       disabled={isLoading}
+                      autoComplete="address-level1"
                     />
                   )}
                 />
@@ -344,7 +416,11 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Salvando..." : cliente ? "Salvar Alterações" : "Cadastrar Cliente"}
+              {isLoading
+                ? "Salvando..."
+                : cliente
+                ? "Salvar Alterações"
+                : "Cadastrar Cliente"}
             </Button>
           </CardFooter>
         </form>

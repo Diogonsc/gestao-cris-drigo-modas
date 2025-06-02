@@ -29,6 +29,15 @@ import {
 } from "../ui/select";
 import { formatarMoeda, formatarData } from "../../lib/utils";
 import { MoreHorizontal, Plus } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Search } from "lucide-react";
 
 export function ListaTransacoes() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,161 +135,206 @@ export function ListaTransacoes() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
+          <p className="text-muted-foreground">
+            Gerencie suas receitas e despesas
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nova Transação
+          </Button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-green-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-green-800">Saldo Atual</h3>
-          <p className="text-2xl font-bold text-green-600">
-            {formatarMoeda(saldoAtual)}
-          </p>
-        </div>
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-800">Total Receitas</h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {formatarMoeda(totalReceitas)}
-          </p>
-        </div>
-        <div className="bg-red-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-red-800">Total Despesas</h3>
-          <p className="text-2xl font-bold text-red-600">
-            {formatarMoeda(totalDespesas)}
-          </p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Saldo Atual</CardTitle>
+            <CardDescription>Saldo disponível em caixa</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-600">
+              {formatarMoeda(saldoAtual)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Receitas</CardTitle>
+            <CardDescription>Receitas registradas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-blue-600">
+              {formatarMoeda(totalReceitas)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Despesas</CardTitle>
+            <CardDescription>Despesas registradas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-red-600">
+              {formatarMoeda(totalDespesas)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          <Input
-            placeholder="Buscar por descrição ou categoria..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="w-full md:w-64"
-          />
-          <Select value={tipoFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="receita">Receitas</SelectItem>
-              <SelectItem value="despesa">Despesas</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="pendente">Pendente</SelectItem>
-              <SelectItem value="concluida">Concluída</SelectItem>
-              <SelectItem value="cancelada">Cancelada</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Transação
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Transações</CardTitle>
+          <CardDescription>
+            Todas as transações financeiras registradas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por descrição ou categoria..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="pl-8"
+              />
+            </div>
+            <Select value={tipoFilter} onValueChange={handleFilterChange}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="receita">Receitas</SelectItem>
+                <SelectItem value="despesa">Despesas</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={statusFilter}
+              onValueChange={handleStatusFilterChange}
+            >
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="concluida">Concluída</SelectItem>
+                <SelectItem value="cancelada">Cancelada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Forma de Pagamento</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTransacoes.map((transacao) => (
-              <TableRow key={transacao.id}>
-                <TableCell>{formatarData(transacao.data)}</TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      transacao.tipo === "receita"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {transacao.tipo === "receita" ? "Receita" : "Despesa"}
-                  </span>
-                </TableCell>
-                <TableCell>{transacao.categoria}</TableCell>
-                <TableCell>{transacao.descricao}</TableCell>
-                <TableCell
-                  className={
-                    transacao.tipo === "receita"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }
-                >
-                  {formatarMoeda(transacao.valor)}
-                </TableCell>
-                <TableCell>
-                  {transacao.formaPagamento === "dinheiro"
-                    ? "Dinheiro"
-                    : transacao.formaPagamento === "cartao_credito"
-                    ? "Cartão de Crédito"
-                    : transacao.formaPagamento === "cartao_debito"
-                    ? "Cartão de Débito"
-                    : transacao.formaPagamento === "pix"
-                    ? "PIX"
-                    : "Transferência"}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      transacao.status === "concluida"
-                        ? "bg-green-100 text-green-800"
-                        : transacao.status === "pendente"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {transacao.status === "concluida"
-                      ? "Concluída"
-                      : transacao.status === "pendente"
-                      ? "Pendente"
-                      : "Cancelada"}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleEdit(transacao.id)}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Forma de Pagamento</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTransacoes.map((transacao) => (
+                  <TableRow key={transacao.id}>
+                    <TableCell>{formatarData(transacao.data)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          transacao.tipo === "receita"
+                            ? "text-green-500 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800"
+                            : "text-red-500 border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800"
+                        }
                       >
-                        Editar
-                      </DropdownMenuItem>
-                      {transacao.status === "pendente" && (
-                        <DropdownMenuItem
-                          onClick={() => handleConfirmCancel(transacao.id)}
-                          className="text-red-600"
-                        >
-                          Cancelar
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                        {transacao.tipo === "receita" ? "Receita" : "Despesa"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{transacao.categoria}</TableCell>
+                    <TableCell>{transacao.descricao}</TableCell>
+                    <TableCell
+                      className={
+                        transacao.tipo === "receita"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }
+                    >
+                      {formatarMoeda(transacao.valor)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {transacao.formaPagamento === "dinheiro"
+                          ? "Dinheiro"
+                          : transacao.formaPagamento === "cartao_credito"
+                          ? "Cartão de Crédito"
+                          : transacao.formaPagamento === "cartao_debito"
+                          ? "Cartão de Débito"
+                          : transacao.formaPagamento === "pix"
+                          ? "PIX"
+                          : "Transferência"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          transacao.status === "concluida"
+                            ? "text-green-500 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800"
+                            : transacao.status === "pendente"
+                            ? "text-yellow-500 border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800"
+                            : "text-red-500 border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800"
+                        }
+                      >
+                        {transacao.status === "concluida"
+                          ? "Concluída"
+                          : transacao.status === "pendente"
+                          ? "Pendente"
+                          : "Cancelada"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEdit(transacao.id)}
+                          >
+                            Editar
+                          </DropdownMenuItem>
+                          {transacao.status === "pendente" && (
+                            <DropdownMenuItem
+                              onClick={() => handleConfirmCancel(transacao.id)}
+                              className="text-red-600"
+                            >
+                              Cancelar
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {showForm && (
         <DialogConfirm

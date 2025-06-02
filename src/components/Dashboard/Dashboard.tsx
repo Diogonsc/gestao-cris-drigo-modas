@@ -156,7 +156,7 @@ export function Dashboard() {
         {cards.map((card) => (
           <Card
             key={card.title}
-            className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            className="p-6 cursor-pointer hover:shadow-lg transition-shadow hover:bg-gray-900"
             onClick={card.action}
           >
             <div className="flex flex-col items-center text-center">

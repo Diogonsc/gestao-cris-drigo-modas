@@ -90,82 +90,122 @@ export default function Relatorios() {
   };
 
   if (isLoading) {
-    return <Loading text="Gerando relatório..." />;
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
+            <p className="text-muted-foreground">
+              Visualize e analise os dados do seu negócio
+            </p>
+          </div>
+        </div>
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 bg-muted rounded" />
+          <div className="h-[400px] bg-muted rounded" />
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-500">
-        <p>Erro ao gerar relatório: {error}</p>
-        <Button onClick={handleGerarRelatorio} className="mt-4">
-          Tentar novamente
-        </Button>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
+            <p className="text-muted-foreground">
+              Visualize e analise os dados do seu negócio
+            </p>
+          </div>
+        </div>
+        <div className="text-center text-red-500 p-4">
+          <p>Erro ao gerar relatório: {error}</p>
+          <Button onClick={handleGerarRelatorio} className="mt-4">
+            Tentar novamente
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Relatórios</h1>
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
+          <p className="text-muted-foreground">
+            Visualize e analise os dados do seu negócio
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label>Tipo de Relatório</Label>
-          <Select
-            value={tipoRelatorio}
-            onValueChange={(value) => setTipoRelatorio(value as TipoRelatorio)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo de relatório" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="vendas">Vendas</SelectItem>
-              <SelectItem value="financeiro">Financeiro</SelectItem>
-              <SelectItem value="estoque">Estoque</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {tipoRelatorio !== "estoque" && (
-          <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Relatórios Disponíveis</CardTitle>
+          <CardDescription>
+            Selecione o tipo de relatório e o período desejado
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="space-y-2">
-              <Label>Data Inicial</Label>
-              <Input
-                type="date"
-                value={periodo.inicio.toISOString().split("T")[0]}
-                onChange={(e) =>
-                  setPeriodo((prev) => ({
-                    ...prev,
-                    inicio: new Date(e.target.value),
-                  }))
+              <Label>Tipo de Relatório</Label>
+              <Select
+                value={tipoRelatorio}
+                onValueChange={(value) =>
+                  setTipoRelatorio(value as TipoRelatorio)
                 }
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo de relatório" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vendas">Vendas</SelectItem>
+                  <SelectItem value="financeiro">Financeiro</SelectItem>
+                  <SelectItem value="estoque">Estoque</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Data Final</Label>
-              <Input
-                type="date"
-                value={periodo.fim.toISOString().split("T")[0]}
-                onChange={(e) =>
-                  setPeriodo((prev) => ({
-                    ...prev,
-                    fim: new Date(e.target.value),
-                  }))
-                }
-              />
-            </div>
-          </>
-        )}
+            {tipoRelatorio !== "estoque" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Data Inicial</Label>
+                  <Input
+                    type="date"
+                    value={periodo.inicio.toISOString().split("T")[0]}
+                    onChange={(e) =>
+                      setPeriodo((prev) => ({
+                        ...prev,
+                        inicio: new Date(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
 
-        <div className="md:col-span-3">
-          <Button onClick={handleGerarRelatorio} className="w-full">
+                <div className="space-y-2">
+                  <Label>Data Final</Label>
+                  <Input
+                    type="date"
+                    value={periodo.fim.toISOString().split("T")[0]}
+                    onChange={(e) =>
+                      setPeriodo((prev) => ({
+                        ...prev,
+                        fim: new Date(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <Button onClick={handleGerarRelatorio} className="w-full md:w-auto">
             Gerar Relatório
           </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <Tabs
         value={tipoRelatorio}

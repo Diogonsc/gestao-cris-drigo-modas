@@ -36,9 +36,9 @@ const ListaCupons = lazy(() =>
   }))
 );
 
-const ListaProdutos = lazy(() =>
-  import("../components/Produtos/ListaProdutos").then((module) => ({
-    default: module.ListaProdutos,
+const Produtos = lazy(() =>
+  import("../pages/Produtos").then((module) => ({
+    default: module.default,
   }))
 );
 
@@ -60,7 +60,12 @@ const ListaTransacoes = lazy(() =>
   }))
 );
 
-const Relatorios = lazy(() => import("../components/Relatorios/Relatorios"));
+const Relatorios = lazy(() =>
+  import("../components/Relatorios/Relatorios").then((module) => ({
+    default: module.default,
+  }))
+);
+
 const Configuracoes = lazy(
   () => import("../components/Configuracoes/Configuracoes")
 );
@@ -78,9 +83,39 @@ const NovaCompra = lazy(() =>
   }))
 );
 
-const ListaUsuarios = lazy(() =>
-  import("../components/Usuarios/ListaUsuarios").then((module) => ({
-    default: module.ListaUsuarios,
+const Usuarios = lazy(() =>
+  import("../pages/Usuarios").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const NovoCliente = lazy(() =>
+  import("../pages/NovoCliente").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const NovoProduto = lazy(() =>
+  import("../pages/NovoProduto").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const EditarProduto = lazy(() =>
+  import("../pages/EditarProduto").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const NovoUsuario = lazy(() =>
+  import("../pages/NovoUsuario").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const EditarUsuario = lazy(() =>
+  import("../pages/EditarUsuario").then((module) => ({
+    default: module.default,
   }))
 );
 
@@ -114,8 +149,22 @@ const routes: RouteConfig[] = [
   },
   {
     path: "/produtos",
-    element: ListaProdutos,
+    element: Produtos,
     title: "Produtos",
+    requiresAuth: true,
+    permissions: ["gerenciar_produtos"],
+  },
+  {
+    path: "/novo-produto",
+    element: NovoProduto,
+    title: "Novo Produto",
+    requiresAuth: true,
+    permissions: ["gerenciar_produtos"],
+  },
+  {
+    path: "/produtos/:id",
+    element: EditarProduto,
+    title: "Editar Produto",
     requiresAuth: true,
     permissions: ["gerenciar_produtos"],
   },
@@ -123,6 +172,13 @@ const routes: RouteConfig[] = [
     path: "/clientes",
     element: Clientes,
     title: "Clientes",
+    requiresAuth: true,
+    permissions: ["gerenciar_clientes"],
+  },
+  {
+    path: "/novo-cliente",
+    element: NovoCliente,
+    title: "Novo Cliente",
     requiresAuth: true,
     permissions: ["gerenciar_clientes"],
   },
@@ -170,8 +226,22 @@ const routes: RouteConfig[] = [
   },
   {
     path: "/usuarios",
-    element: ListaUsuarios,
+    element: Usuarios,
     title: "Usuários",
+    requiresAuth: true,
+    permissions: ["gerenciar_usuarios"],
+  },
+  {
+    path: "/novo-usuario",
+    element: NovoUsuario,
+    title: "Novo Usuário",
+    requiresAuth: true,
+    permissions: ["gerenciar_usuarios"],
+  },
+  {
+    path: "/usuarios/:id",
+    element: EditarUsuario,
+    title: "Editar Usuário",
     requiresAuth: true,
     permissions: ["gerenciar_usuarios"],
   },

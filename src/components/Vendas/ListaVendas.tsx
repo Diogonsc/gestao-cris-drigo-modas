@@ -42,6 +42,14 @@ import { Venda } from "../../store";
 import { formatarMoeda, formatarData } from "../../lib/utils";
 import { ExportButton } from "@/components/ui/export-button";
 import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export function ListaVendas() {
   const navigate = useNavigate();
@@ -134,11 +142,11 @@ export function ListaVendas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Vendas</h1>
           <p className="text-muted-foreground">
-            Gerencie suas vendas e acompanhe o desempenho
+            Gerencie as vendas e acompanhe o histórico de transações
           </p>
         </div>
         <div className="flex gap-2">
@@ -146,7 +154,7 @@ export function ListaVendas() {
             data={exportData}
             filename="vendas"
             headers={headers}
-            disabled={vendas.length === 0}
+            disabled={filteredVendas.length === 0}
           />
           <Button onClick={() => setShowForm(true)}>
             <Plus className="mr-2 h-4 w-4" /> Nova Venda
@@ -154,115 +162,114 @@ export function ListaVendas() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          <div className="relative flex-1">
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Vendas</CardTitle>
+          <CardDescription>
+            Todas as vendas registradas no sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="relative flex-1 mb-6">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar vendas..."
+              placeholder="Buscar vendas por cliente, produto ou código..."
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <option value="all">Todos os status</option>
-              <option value="concluida">Concluída</option>
-              <option value="pendente">Pendente</option>
-              <option value="cancelada">Cancelada</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      <div className="rounded-md border">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-2">Data</th>
-              <th className="text-left p-2">Cliente</th>
-              <th className="text-right p-2">Valor Total</th>
-              <th className="text-right p-2">Valor Pago</th>
-              <th className="text-center p-2">Status</th>
-              <th className="text-center p-2">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredVendas.map((venda) => (
-              <tr key={venda.id} className="border-b">
-                <td className="p-2">{formatarData(venda.data)}</td>
-                <td className="p-2">{venda.cliente.nome}</td>
-                <td className="text-right p-2">{formatarMoeda(venda.total)}</td>
-                <td className="text-right p-2">
-                  {formatarMoeda(venda.valorPago)}
-                </td>
-                <td className="text-center p-2">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      venda.status === "concluida"
-                        ? "bg-green-100 text-green-800"
-                        : venda.status === "pendente"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {venda.status === "concluida"
-                      ? "Concluída"
-                      : venda.status === "pendente"
-                      ? "Pendente"
-                      : "Cancelada"}
-                  </span>
-                </td>
-                <td className="p-2">
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setVendaSelecionada(venda);
-                        setShowDetails(true);
-                      }}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Valor Total</TableHead>
+                  <TableHead>Forma de Pagamento</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredVendas.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center h-32 text-muted-foreground"
                     >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCancel(venda)}
-                      disabled={venda.status === "cancelada"}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => window.print()}
-                    >
-                      <Receipt className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filteredVendas.length === 0 && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="text-center p-4 text-muted-foreground"
-                >
-                  Nenhuma venda encontrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                      Nenhuma venda encontrada.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredVendas.map((venda) => (
+                    <TableRow key={venda.id}>
+                      <TableCell>{formatarData(venda.data)}</TableCell>
+                      <TableCell className="font-medium">
+                        {venda.cliente.nome}
+                      </TableCell>
+                      <TableCell>{formatarMoeda(venda.valorTotal)}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {venda.formaPagamento}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            venda.status === "concluida"
+                              ? "text-green-500 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800"
+                              : venda.status === "cancelada"
+                              ? "text-red-500 border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800"
+                              : "text-yellow-500 border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800"
+                          }
+                        >
+                          {venda.status === "concluida"
+                            ? "Concluída"
+                            : venda.status === "cancelada"
+                            ? "Cancelada"
+                            : "Pendente"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setVendaSelecionada(venda);
+                              setShowDetails(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleCancel(venda)}
+                            disabled={venda.status === "cancelada"}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => window.print()}
+                          >
+                            <Receipt className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-4xl">
