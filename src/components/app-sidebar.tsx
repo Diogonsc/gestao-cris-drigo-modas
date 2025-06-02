@@ -7,7 +7,7 @@ import {
   Settings,
   Home,
   ShoppingCart,
-  UserCircle
+  UserCircle,
 } from "lucide-react";
 import { UserInfo } from "@/components/user-info";
 import {
@@ -70,7 +70,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 flex justify-center">
         <div className="flex items-center gap-2">
           <Package className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">Gestão Pro</span>
+          <span className="font-bold text-xl">Omnix</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -89,7 +89,6 @@ export function AppSidebar() {
                           : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                     >
-
                       <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
                     </Link>
