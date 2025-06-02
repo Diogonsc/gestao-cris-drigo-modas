@@ -107,7 +107,9 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
         });
       } else {
         // Adicionar novo produto
-        await adicionarProduto(data);
+        const margemLucro =
+          ((data.precoVenda - data.precoCusto) / data.precoCusto) * 100;
+        await adicionarProduto({ ...data, margemLucro });
 
         toast({
           title: "Produto cadastrado",
@@ -140,7 +142,12 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void form.handleSubmit(handleSubmit)(e);
+          }}
+        >
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <div>
@@ -194,7 +201,7 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
                   render={({ field }) => (
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value as string}
                       disabled={isLoading}
                     >
                       <SelectTrigger>
@@ -234,7 +241,9 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
                       min="0"
                       placeholder="0,00"
                       disabled={isLoading}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => {
+                        field.onChange(Number(e.target.value));
+                      }}
                     />
                   )}
                 />
@@ -250,7 +259,9 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
                       min="0"
                       placeholder="0,00"
                       disabled={isLoading}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => {
+                        field.onChange(Number(e.target.value));
+                      }}
                     />
                   )}
                 />
@@ -265,7 +276,9 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
                       min="0"
                       placeholder="0"
                       disabled={isLoading}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => {
+                        field.onChange(Number(e.target.value));
+                      }}
                     />
                   )}
                 />
@@ -280,7 +293,9 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
                       min="0"
                       placeholder="0"
                       disabled={isLoading}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => {
+                        field.onChange(Number(e.target.value));
+                      }}
                     />
                   )}
                 />
@@ -291,7 +306,7 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
                   render={({ field }) => (
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value as string}
                       disabled={isLoading}
                     >
                       <SelectTrigger>
@@ -338,7 +353,7 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
                   render={({ field }) => (
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value as "ativo" | "inativo"}
                       disabled={isLoading}
                     >
                       <SelectTrigger>
@@ -359,13 +374,19 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => onSuccess()}
+              onClick={() => {
+                onSuccess();
+              }}
               disabled={isLoading}
             >
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Salvando..." : produto ? "Atualizar" : "Cadastrar"}
+              {isLoading
+                ? "Salvando..."
+                : produto
+                ? "Atualizar Produto"
+                : "Cadastrar Produto"}
             </Button>
           </CardFooter>
         </form>

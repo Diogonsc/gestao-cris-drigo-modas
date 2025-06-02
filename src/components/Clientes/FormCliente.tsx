@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../ui/button";
@@ -91,6 +91,7 @@ export function FormCliente({
     formState: { errors },
     reset,
     setValue,
+    control,
   } = useForm<FormClienteData>({
     resolver: zodResolver(schemaCliente),
     defaultValues: cliente || {
@@ -111,17 +112,17 @@ export function FormCliente({
     },
   });
 
-  const onSubmit = async (data: FormClienteData) => {
+  const onSubmit = (data: FormClienteData) => {
     try {
       setIsSubmitting(true);
       if (cliente) {
-        await atualizarCliente(cliente.id, data);
+        atualizarCliente(cliente.id, data);
         toast({
           title: "Cliente atualizado",
           description: "Os dados do cliente foram atualizados com sucesso.",
         });
       } else {
-        await adicionarCliente(data);
+        adicionarCliente(data);
         toast({
           title: "Cliente cadastrado",
           description: "O cliente foi cadastrado com sucesso.",
@@ -152,7 +153,13 @@ export function FormCliente({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSubmit(onSubmit)(e);
+      }}
+      className="space-y-4"
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="nome">Nome</Label>
@@ -162,11 +169,18 @@ export function FormCliente({
 
         <div className="space-y-2">
           <Label htmlFor="cpf">CPF</Label>
-          <InputMask
-            id="cpf"
-            mask="999.999.999-99"
-            {...register("cpf")}
-            error={errors.cpf?.message}
+          <Controller
+            name="cpf"
+            control={control}
+            render={({ field }) => (
+              <InputMask
+                id="cpf"
+                mask="999.999.999-99"
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.cpf?.message}
+              />
+            )}
           />
           <FormFeedback error={errors.cpf?.message} />
         </div>
@@ -184,22 +198,36 @@ export function FormCliente({
 
         <div className="space-y-2">
           <Label htmlFor="telefone">Telefone</Label>
-          <InputMask
-            id="telefone"
-            mask="(99) 99999-9999"
-            {...register("telefone")}
-            error={errors.telefone?.message}
+          <Controller
+            name="telefone"
+            control={control}
+            render={({ field }) => (
+              <InputMask
+                id="telefone"
+                mask="(99) 99999-9999"
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.telefone?.message}
+              />
+            )}
           />
           <FormFeedback error={errors.telefone?.message} />
         </div>
 
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="cep">CEP</Label>
-          <InputMask
-            id="cep"
-            mask="99999-999"
-            {...register("endereco.cep")}
-            error={errors.endereco?.cep?.message}
+          <Controller
+            name="endereco.cep"
+            control={control}
+            render={({ field }) => (
+              <InputMask
+                id="cep"
+                mask="99999-999"
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.endereco?.cep?.message}
+              />
+            )}
           />
           <FormFeedback error={errors.endereco?.cep?.message} />
         </div>
@@ -258,7 +286,9 @@ export function FormCliente({
           <Label htmlFor="estado">Estado</Label>
           <Select
             defaultValue={cliente?.endereco.estado}
-            onValueChange={(value) => setValue("endereco.estado", value)}
+            onValueChange={(value) => {
+              setValue("endereco.estado", value);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione o estado" />
@@ -278,9 +308,9 @@ export function FormCliente({
           <Label htmlFor="status">Status</Label>
           <Select
             defaultValue={cliente?.status || "ativo"}
-            onValueChange={(value) =>
-              setValue("status", value as "ativo" | "inativo")
-            }
+            onValueChange={(value) => {
+              setValue("status", value as "ativo" | "inativo");
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione o status" />

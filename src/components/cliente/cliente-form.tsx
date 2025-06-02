@@ -71,7 +71,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
         },
   });
 
-  const handleSubmit = async (data: ClienteFormData) => {
+  const handleSubmit = (data: ClienteFormData) => {
     setIsLoading(true);
     try {
       // Limpar formatos dos campos
@@ -171,7 +171,12 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void form.handleSubmit(handleSubmit)(e);
+          }}
+        >
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <div>
@@ -301,7 +306,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                       {...field}
                       onBlur={(e) => {
                         field.onBlur();
-                        handleCepBlur();
+                        void handleCepBlur();
                       }}
                       disabled={isLoading}
                     >
@@ -418,7 +423,9 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => onSuccess()}
+              onClick={() => {
+                onSuccess();
+              }}
               disabled={isLoading}
             >
               Cancelar
