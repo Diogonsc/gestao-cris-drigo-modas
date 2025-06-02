@@ -17,6 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 const schemaUsuario = z
   .object({
@@ -130,125 +138,136 @@ export function FormUsuario({
   };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void handleSubmit(onSubmit)(e);
-      }}
-      className="flex flex-col h-full"
-    >
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome</Label>
-            <Input
-              id="nome"
-              {...register("nome")}
-              error={errors.nome?.message}
-              disabled={isSubmitting}
-            />
-            <FormFeedback error={errors.nome?.message} />
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {usuario ? "Editar Usuário" : "Cadastro de Usuário"}
+        </CardTitle>
+        <CardDescription>
+          {usuario
+            ? "Atualize as informações do usuário"
+            : "Preencha os dados para cadastrar um novo usuário"}
+        </CardDescription>
+      </CardHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSubmit(onSubmit)(e);
+        }}
+      >
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                {...register("nome")}
+                error={errors.nome?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.nome?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                {...register("email")}
+                error={errors.email?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.email?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="senha">
+                {usuario ? "Nova Senha (opcional)" : "Senha"}
+              </Label>
+              <Input
+                id="senha"
+                type="password"
+                {...register("senha")}
+                error={errors.senha?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.senha?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmarSenha">
+                {usuario ? "Confirmar Nova Senha" : "Confirmar Senha"}
+              </Label>
+              <Input
+                id="confirmarSenha"
+                type="password"
+                {...register("confirmarSenha")}
+                error={errors.confirmarSenha?.message}
+                disabled={isSubmitting}
+              />
+              <FormFeedback error={errors.confirmarSenha?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="perfil">Perfil</Label>
+              <Select
+                defaultValue={usuario?.perfil}
+                onValueChange={(value) => setValue("perfil", value)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um perfil" />
+                </SelectTrigger>
+                <SelectContent>
+                  {perfis.map((perfil) => (
+                    <SelectItem key={perfil} value={perfil}>
+                      {perfil}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormFeedback error={errors.perfil?.message} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                defaultValue={usuario?.status || "ativo"}
+                onValueChange={(value) =>
+                  setValue("status", value as "ativo" | "inativo")
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormFeedback error={errors.status?.message} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register("email")}
-              error={errors.email?.message}
-              disabled={isSubmitting}
-            />
-            <FormFeedback error={errors.email?.message} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="senha">
-              {usuario ? "Nova Senha (opcional)" : "Senha"}
-            </Label>
-            <Input
-              id="senha"
-              type="password"
-              {...register("senha")}
-              error={errors.senha?.message}
-              disabled={isSubmitting}
-            />
-            <FormFeedback error={errors.senha?.message} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmarSenha">
-              {usuario ? "Confirmar Nova Senha" : "Confirmar Senha"}
-            </Label>
-            <Input
-              id="confirmarSenha"
-              type="password"
-              {...register("confirmarSenha")}
-              error={errors.confirmarSenha?.message}
-              disabled={isSubmitting}
-            />
-            <FormFeedback error={errors.confirmarSenha?.message} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="perfil">Perfil</Label>
-            <Select
-              defaultValue={usuario?.perfil}
-              onValueChange={(value) => setValue("perfil", value)}
-              disabled={isSubmitting}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um perfil" />
-              </SelectTrigger>
-              <SelectContent>
-                {perfis.map((perfil) => (
-                  <SelectItem key={perfil} value={perfil}>
-                    {perfil}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormFeedback error={errors.perfil?.message} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              defaultValue={usuario?.status || "ativo"}
-              onValueChange={(value) =>
-                setValue("status", value as "ativo" | "inativo")
-              }
-              disabled={isSubmitting}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormFeedback error={errors.status?.message} />
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-end gap-2 p-4 border-t bg-background">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loading className="mr-2 h-4 w-4" />
-              Salvando...
-            </>
-          ) : usuario ? (
-            "Salvar Alterações"
-          ) : (
-            "Cadastrar Usuário"
-          )}
-        </Button>
-      </div>
+        </CardContent>
+        <CardFooter className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loading className="mr-2 h-4 w-4" />
+                Salvando...
+              </>
+            ) : usuario ? (
+              "Salvar Alterações"
+            ) : (
+              "Cadastrar Usuário"
+            )}
+          </Button>
+        </CardFooter>
+      </form>
       <DialogConfirm
         open={showConfirmCancel}
         onOpenChange={setShowConfirmCancel}
@@ -259,6 +278,6 @@ export function FormUsuario({
           onCancel?.();
         }}
       />
-    </form>
+    </Card>
   );
 }
