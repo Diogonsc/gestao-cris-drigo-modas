@@ -7,6 +7,14 @@ import { AppProvider } from "./providers/app-provider";
 import App from "./App";
 import "./index.css";
 
+// Configuração das flags futuras do React Router v7
+const router = {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  },
+};
+
 async function prepare() {
   if (import.meta.env.DEV) {
     const { worker } = await import("./mocks/browser");
@@ -16,13 +24,13 @@ async function prepare() {
   }
 }
 
-prepare().then(() => {
+void prepare().then(() => {
   const rootElement = document.getElementById("root");
   if (!rootElement) throw new Error("Root element not found");
 
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <BrowserRouter>
+      <BrowserRouter {...router}>
         <AppProvider>
           <SEOProvider>
             <App />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +15,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FaEllipsisV, FaSearch } from "react-icons/fa";
 import { Produto } from "@/types";
 import { useProdutoStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
@@ -30,18 +36,22 @@ interface ListaProdutosProps {
   onEdit: (produto: Produto) => void;
 }
 
+const TODAS_CATEGORIAS = "todas";
+
 export function ListaProdutos({ produtos, onEdit }: ListaProdutosProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { removerProduto } = useProdutoStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoriaFilter, setCategoriaFilter] =
+    useState<string>(TODAS_CATEGORIAS);
 
   const handleDelete = async (id: string) => {
     try {
       await removerProduto(id);
       toast({
-        title: "Produto removido",
-        description: "O produto foi removido com sucesso!",
+        title: "Sucesso",
+        description: "Produto removido com sucesso.",
       });
     } catch (error) {
       toast({
@@ -52,26 +62,73 @@ export function ListaProdutos({ produtos, onEdit }: ListaProdutosProps) {
     }
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleEditClick = (produto: Produto) => {
+    onEdit(produto);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    void handleDelete(id);
+  };
+
+  // Extrair categorias únicas dos produtos
+  const categorias = Array.from(
+    new Set(produtos.map((p) => p.categoria))
+  ).sort();
+
+  // Filtrar produtos por termo de busca e categoria
   const filteredProdutos = produtos.filter((produto) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      produto.nome.toLowerCase().includes(searchLower) ||
-      produto.codigo.toLowerCase().includes(searchLower) ||
-      produto.categoria.toLowerCase().includes(searchLower) ||
-      produto.codigoBarras?.toLowerCase().includes(searchLower)
-    );
+    const matchesSearch =
+      produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      produto.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      produto.categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      produto.codigoBarras?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategoria =
+      categoriaFilter === TODAS_CATEGORIAS ||
+      produto.categoria === categoriaFilter;
+
+    return matchesSearch && matchesCategoria;
   });
+
+  const formatDate = (date: string | Date | undefined) => {
+    if (!date) return "-";
+    const dateObj = new Date(date);
+    return isValid(dateObj)
+      ? format(dateObj, "dd/MM/yyyy HH:mm", { locale: ptBR })
+      : "-";
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Input
-          placeholder="Buscar produtos..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <Button onClick={() => navigate("/produtos/novo")}>Novo Produto</Button>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <FaSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar produto..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="pl-9"
+          />
+        </div>
+        <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filtrar por categoria" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODAS_CATEGORIAS}>
+              Todas as categorias
+            </SelectItem>
+            {categorias.map((categoria) => (
+              <SelectItem key={categoria} value={categoria}>
+                {categoria}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-md border">
@@ -85,93 +142,72 @@ export function ListaProdutos({ produtos, onEdit }: ListaProdutosProps) {
               <TableHead>Estoque</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Última Atualização</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProdutos.map((produto) => (
-              <TableRow key={produto.id}>
-                <TableCell>{produto.codigo}</TableCell>
-                <TableCell>{produto.nome}</TableCell>
-                <TableCell>{produto.categoria}</TableCell>
-                <TableCell>
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(produto.precoVenda)}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span>{produto.estoque}</span>
-                    {produto.estoque <= produto.estoqueMinimo && (
-                      <Badge variant="destructive">Estoque Baixo</Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      produto.status === "ativo" ? "default" : "secondary"
-                    }
-                  >
-                    {produto.status === "ativo" ? "Ativo" : "Inativo"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {format(
-                    new Date(produto.ultimaAtualizacao),
-                    "dd/MM/yyyy HH:mm",
-                    {
-                      locale: ptBR,
-                    }
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4"
-                        >
-                          <circle cx="12" cy="12" r="1" />
-                          <circle cx="12" cy="5" r="1" />
-                          <circle cx="12" cy="19" r="1" />
-                        </svg>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onEdit(produto)}>
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => handleDelete(produto.id)}
-                      >
-                        Remover
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredProdutos.length === 0 && (
+            {filteredProdutos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center">
+                <TableCell
+                  colSpan={8}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   Nenhum produto encontrado.
                 </TableCell>
               </TableRow>
+            ) : (
+              filteredProdutos.map((produto) => (
+                <TableRow key={produto.id}>
+                  <TableCell className="font-medium">
+                    {produto.codigo}
+                  </TableCell>
+                  <TableCell>{produto.nome}</TableCell>
+                  <TableCell>{produto.categoria}</TableCell>
+                  <TableCell>
+                    {produto.precoVenda.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </TableCell>
+                  <TableCell>{produto.estoque}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        produto.status === "ativo" ? "default" : "secondary"
+                      }
+                    >
+                      {produto.status === "ativo" ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{formatDate(produto.ultimaAtualizacao)}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <FaEllipsisV className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            handleEditClick(produto);
+                          }}
+                        >
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => {
+                            handleDeleteClick(produto.id);
+                          }}
+                        >
+                          Remover
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
