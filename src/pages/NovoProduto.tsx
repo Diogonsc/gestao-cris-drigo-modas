@@ -1,9 +1,8 @@
-import { FormProduto } from "@/components/Produtos/FormProduto";
-import { Button } from "@/components/ui/button";
-import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ProdutoForm } from "@/components/produto/produto-form";
 
-const NovoProduto = () => {
+export default function NovoProduto() {
   const navigate = useNavigate();
 
   const handleSuccess = () => {
@@ -11,26 +10,18 @@ const NovoProduto = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
         <Button
           variant="outline"
-          size="icon"
-          onClick={() => navigate("/produtos")}
+          onClick={() => {
+            navigate("/produtos");
+          }}
         >
-          <FaArrowLeft className="h-4 w-4" />
+          Voltar
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Produto</h1>
-          <p className="text-muted-foreground">
-            Adicione um novo produto ao sistema
-          </p>
-        </div>
       </div>
-
-      <FormProduto onSuccess={handleSuccess} />
+      <ProdutoForm onSuccess={handleSuccess} />
     </div>
   );
-};
-
-export default NovoProduto;
+}

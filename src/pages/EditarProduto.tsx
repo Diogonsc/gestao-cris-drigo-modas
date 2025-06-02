@@ -1,69 +1,71 @@
-import { FormProduto } from "@/components/Produtos/FormProduto";
-import { Button } from "@/components/ui/button";
-import { FaArrowLeft } from "react-icons/fa";
-import { useNavigate, useParams } from "react-router-dom";
-import { useProdutoStore } from "@/store";
 import { useEffect, useState } from "react";
-import { Loading } from "@/components/ui/loading";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useProdutoStore } from "@/store";
+import { Produto } from "@/types";
+import { ProdutoForm } from "@/components/produto/produto-form";
 
-const EditarProduto = () => {
+export default function EditarProduto() {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const { produtos, loading, error } = useProdutoStore();
-  const [produto, setProduto] = useState(null);
+  const { toast } = useToast();
+  const { id } = useParams<{ id: string }>();
+  const { produtos, setProdutoAtual } = useProdutoStore();
+  const [produto, setProduto] = useState<Produto | undefined>(undefined);
 
   useEffect(() => {
-    if (id) {
-      const produtoEncontrado = produtos.find((p) => p.id === id);
-      if (produtoEncontrado) {
-        setProduto(produtoEncontrado);
-      } else {
-        navigate("/produtos");
-      }
+    if (!id) {
+      toast({
+        title: "Erro",
+        description: "ID do produto não encontrado.",
+        variant: "destructive",
+      });
+      navigate("/produtos");
+      return;
     }
-  }, [id, produtos, navigate]);
+
+    const produtoEncontrado = produtos.find((p) => p.id === id);
+    if (!produtoEncontrado) {
+      toast({
+        title: "Erro",
+        description: "Produto não encontrado.",
+        variant: "destructive",
+      });
+      navigate("/produtos");
+      return;
+    }
+
+    setProduto(produtoEncontrado);
+    setProdutoAtual(produtoEncontrado);
+  }, [id, produtos, navigate, toast, setProdutoAtual]);
 
   const handleSuccess = () => {
     navigate("/produtos");
   };
 
-  if (loading) {
-    return <Loading text="Carregando produto..." />;
-  }
-
-  if (error) {
+  if (!produto) {
     return (
-      <div className="text-red-500 text-center p-4">
-        Erro ao carregar produto: {error}
+      <div className="container mx-auto py-6">
+        <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
+          <p className="text-lg text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
 
-  if (!produto) {
-    return null;
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
         <Button
           variant="outline"
-          size="icon"
-          onClick={() => navigate("/produtos")}
+          onClick={() => {
+            navigate("/produtos");
+          }}
         >
-          <FaArrowLeft className="h-4 w-4" />
+          Voltar
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Produto</h1>
-          <p className="text-muted-foreground">
-            Atualize as informações do produto
-          </p>
-        </div>
       </div>
-
-      <FormProduto produto={produto} onSuccess={handleSuccess} />
+      <ProdutoForm produto={produto} onSuccess={handleSuccess} />
     </div>
   );
-};
-
-export default EditarProduto;
+}

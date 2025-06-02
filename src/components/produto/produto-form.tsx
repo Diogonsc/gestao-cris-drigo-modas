@@ -7,19 +7,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { CustomFormField } from "@/components/form-field";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Produto } from "@/types";
-import { adicionarProduto, atualizarProduto } from "@/services/mockData";
+import { useProdutoStore } from "@/store";
 
 // Schema de validação
 const produtoSchema = z.object({
+  codigo: z.string().min(1, { message: "Código é obrigatório" }),
   nome: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
-  sku: z.string().min(3, { message: "SKU deve ter pelo menos 3 caracteres" }),
-  preco: z.number().min(0.01, { message: "Preço deve ser maior que zero" }),
-  estoque: z.number().min(0, { message: "Estoque não pode ser negativo" }),
+  descricao: z
+    .string()
+    .min(3, { message: "Descrição deve ter pelo menos 3 caracteres" }),
   categoria: z.string().min(1, { message: "Categoria é obrigatória" }),
-  estoqueMinimo: z.number().min(0, { message: "Estoque mínimo não pode ser negativo" }),
-  fornecedor: z.string().optional(),
+  precoCusto: z
+    .number()
+    .min(0, { message: "Preço de custo deve ser maior ou igual a 0" }),
+  precoVenda: z
+    .number()
+    .min(0, { message: "Preço de venda deve ser maior ou igual a 0" }),
+  estoque: z
+    .number()
+    .min(0, { message: "Estoque deve ser maior ou igual a 0" }),
+  estoqueMinimo: z
+    .number()
+    .min(0, { message: "Estoque mínimo deve ser maior ou igual a 0" }),
+  unidade: z.string().min(1, { message: "Unidade é obrigatória" }),
+  codigoBarras: z.string().optional(),
+  status: z.enum(["ativo", "inativo"]),
 });
 
 type ProdutoFormData = z.infer<typeof produtoSchema>;
@@ -32,50 +60,54 @@ interface ProdutoFormProps {
 export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { adicionarProduto, atualizarProduto } = useProdutoStore();
 
   const form = useForm<ProdutoFormData>({
     resolver: zodResolver(produtoSchema),
-    defaultValues: produto ?
-      { 
-        ...produto,
-        estoqueMinimo: 5, // Valor padrão
-        fornecedor: "" // Valor padrão
-      } :
-      {
-        nome: "",
-        sku: "",
-        preco: 0,
-        estoque: 0,
-        categoria: "",
-        estoqueMinimo: 5,
-        fornecedor: ""
-      },
+    defaultValues: produto
+      ? {
+          codigo: produto.codigo,
+          nome: produto.nome,
+          descricao: produto.descricao,
+          categoria: produto.categoria,
+          precoCusto: produto.precoCusto,
+          precoVenda: produto.precoVenda,
+          estoque: produto.estoque,
+          estoqueMinimo: produto.estoqueMinimo,
+          unidade: produto.unidade,
+          codigoBarras: produto.codigoBarras,
+          status: produto.status,
+        }
+      : {
+          codigo: "",
+          nome: "",
+          descricao: "",
+          categoria: "",
+          precoCusto: 0,
+          precoVenda: 0,
+          estoque: 0,
+          estoqueMinimo: 0,
+          unidade: "UN",
+          codigoBarras: "",
+          status: "ativo",
+        },
   });
 
   const handleSubmit = async (data: ProdutoFormData) => {
     setIsLoading(true);
     try {
-      const produtoData = {
-        id: produto?.id || crypto.randomUUID(),
-        nome: data.nome,
-        sku: data.sku,
-        preco: data.preco,
-        estoque: data.estoque,
-        categoria: data.categoria,
-        estoqueMinimo: data.estoqueMinimo
-      };
-
       if (produto) {
         // Atualizar produto existente
-        atualizarProduto(produtoData);
+        await atualizarProduto(produto.id, data);
 
         toast({
           title: "Produto atualizado",
-          description: "As informações do produto foram atualizadas com sucesso!",
+          description:
+            "As informações do produto foram atualizadas com sucesso!",
         });
       } else {
         // Adicionar novo produto
-        adicionarProduto(produtoData);
+        await adicionarProduto(data);
 
         toast({
           title: "Produto cadastrado",
@@ -98,7 +130,9 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{produto ? "Editar Produto" : "Cadastro de Produto"}</CardTitle>
+        <CardTitle>
+          {produto ? "Editar Produto" : "Cadastro de Produto"}
+        </CardTitle>
         <CardDescription>
           {produto
             ? "Atualize as informações do produto"
@@ -108,107 +142,234 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <CustomFormField
-                name="nome"
-                label="Nome do Produto"
-                control={form.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="Nome do produto"
-                    disabled={isLoading}
-                  />
-                )}
-              />
-              <CustomFormField
-                name="sku"
-                label="SKU"
-                control={form.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="Código SKU"
-                    disabled={isLoading}
-                  />
-                )}
-              />
-              <CustomFormField
-                name="preco"
-                label="Preço"
-                control={form.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    disabled={isLoading}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                  />
-                )}
-              />
-              <CustomFormField
-                name="estoque"
-                label="Estoque"
-                control={form.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="0"
-                    disabled={isLoading}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
-                  />
-                )}
-              />
-              <CustomFormField
-                name="categoria"
-                label="Categoria"
-                control={form.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="Categoria"
-                    disabled={isLoading}
-                  />
-                )}
-              />
-              <CustomFormField
-                name="estoqueMinimo"
-                label="Estoque Mínimo"
-                control={form.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="0"
-                    disabled={isLoading}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
-                  />
-                )}
-              />
-              <CustomFormField
-                name="fornecedor"
-                label="Fornecedor"
-                control={form.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="Nome do fornecedor"
-                    disabled={isLoading}
-                  />
-                )}
-              />
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Informações Básicas</h3>
+                <p className="text-sm text-muted-foreground">
+                  Dados principais do produto
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CustomFormField
+                  name="codigo"
+                  label="Código"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="Código do produto"
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+                <CustomFormField
+                  name="nome"
+                  label="Nome"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="Nome do produto"
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+                <CustomFormField
+                  name="descricao"
+                  label="Descrição"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="Descrição do produto"
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+                <CustomFormField
+                  name="categoria"
+                  label="Categoria"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vestuário">Vestuário</SelectItem>
+                        <SelectItem value="Calçados">Calçados</SelectItem>
+                        <SelectItem value="Acessórios">Acessórios</SelectItem>
+                        <SelectItem value="Bolsas">Bolsas</SelectItem>
+                        <SelectItem value="Outros">Outros</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Preços e Estoque</h3>
+                <p className="text-sm text-muted-foreground">
+                  Informações de preço e controle de estoque
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CustomFormField
+                  name="precoCusto"
+                  label="Preço de Custo"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0,00"
+                      disabled={isLoading}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  )}
+                />
+                <CustomFormField
+                  name="precoVenda"
+                  label="Preço de Venda"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0,00"
+                      disabled={isLoading}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  )}
+                />
+                <CustomFormField
+                  name="estoque"
+                  label="Estoque Atual"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      disabled={isLoading}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  )}
+                />
+                <CustomFormField
+                  name="estoqueMinimo"
+                  label="Estoque Mínimo"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      disabled={isLoading}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  )}
+                />
+                <CustomFormField
+                  name="unidade"
+                  label="Unidade"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma unidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UN">Unidade</SelectItem>
+                        <SelectItem value="KG">Quilograma</SelectItem>
+                        <SelectItem value="CX">Caixa</SelectItem>
+                        <SelectItem value="PCT">Pacote</SelectItem>
+                        <SelectItem value="PAR">Par</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <CustomFormField
+                  name="codigoBarras"
+                  label="Código de Barras"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="Código de barras (opcional)"
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Status</h3>
+                <p className="text-sm text-muted-foreground">
+                  Status atual do produto
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CustomFormField
+                  name="status"
+                  label="Status"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ativo">Ativo</SelectItem>
+                        <SelectItem value="inativo">Inativo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
             </div>
           </CardContent>
-          <CardFooter>
+
+          <CardFooter className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onSuccess()}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Salvando..." : produto ? "Salvar Alterações" : "Cadastrar Produto"}
+              {isLoading ? "Salvando..." : produto ? "Atualizar" : "Cadastrar"}
             </Button>
           </CardFooter>
         </form>
       </Form>
     </Card>
   );
-} 
+}

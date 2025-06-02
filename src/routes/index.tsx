@@ -36,11 +36,7 @@ const ListaCupons = lazy(() =>
   }))
 );
 
-const Produtos = lazy(() =>
-  import("../pages/Produtos").then((module) => ({
-    default: module.default,
-  }))
-);
+const Produtos = lazy(() => import("../pages/Produtos"));
 
 const Clientes = lazy(() =>
   import("../pages/Clientes").then((module) => ({
@@ -95,17 +91,9 @@ const NovoCliente = lazy(() =>
   }))
 );
 
-const NovoProduto = lazy(() =>
-  import("../pages/NovoProduto").then((module) => ({
-    default: module.default,
-  }))
-);
+const NovoProduto = lazy(() => import("../pages/NovoProduto"));
 
-const EditarProduto = lazy(() =>
-  import("../pages/EditarProduto").then((module) => ({
-    default: module.default,
-  }))
-);
+const EditarProduto = lazy(() => import("../pages/EditarProduto"));
 
 const NovoUsuario = lazy(() =>
   import("../pages/NovoUsuario").then((module) => ({
@@ -155,7 +143,7 @@ const routes: RouteConfig[] = [
     permissions: ["gerenciar_produtos"],
   },
   {
-    path: "/novo-produto",
+    path: "/produtos/novo",
     element: NovoProduto,
     title: "Novo Produto",
     requiresAuth: true,
