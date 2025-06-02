@@ -205,12 +205,12 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                       mask="999.999.999-99"
                       maskChar={null}
                       {...field}
-                      inputRef={ref}
                       disabled={isLoading}
                     >
                       {(inputProps: any) => (
                         <Input
                           {...inputProps}
+                          ref={ref}
                           placeholder="000.000.000-00"
                           type="tel"
                           autoComplete="off"
@@ -241,12 +241,12 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                       mask="(99) 99999-9999"
                       maskChar={null}
                       {...field}
-                      inputRef={ref}
                       disabled={isLoading}
                     >
                       {(inputProps: any) => (
                         <Input
                           {...inputProps}
+                          ref={ref}
                           placeholder="(00) 00000-0000"
                           type="tel"
                           autoComplete="tel"
@@ -264,12 +264,12 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                       mask="(99) 99999-9999"
                       maskChar={null}
                       {...field}
-                      inputRef={ref}
                       disabled={isLoading}
                     >
                       {(inputProps: any) => (
                         <Input
                           {...inputProps}
+                          ref={ref}
                           placeholder="(00) 00000-0000"
                           type="tel"
                           autoComplete="tel"
@@ -299,7 +299,6 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                       mask="99999-999"
                       maskChar={null}
                       {...field}
-                      inputRef={ref}
                       onBlur={(e) => {
                         field.onBlur();
                         handleCepBlur();
@@ -309,6 +308,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                       {(inputProps: any) => (
                         <Input
                           {...inputProps}
+                          ref={ref}
                           placeholder="00000-000"
                           type="tel"
                           autoComplete="postal-code"
