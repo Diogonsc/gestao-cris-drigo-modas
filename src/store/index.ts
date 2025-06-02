@@ -732,6 +732,67 @@ export const useProdutoStore = create<ProdutoState>()(
       fetchProdutos: async () => {
         try {
           set({ isLoading: true, error: null });
+
+          // Em produção, usa dados mockados
+          if (import.meta.env.PROD) {
+            const mockProdutos = [
+              {
+                id: "1",
+                codigo: "P001",
+                nome: "Camisa Básica",
+                descricao: "Camisa básica de algodão",
+                categoria: "Vestuário",
+                precoCusto: 30,
+                precoVenda: 59.9,
+                margemLucro: 99.67,
+                estoque: 50,
+                estoqueMinimo: 10,
+                unidade: "UN",
+                codigoBarras: "7891234567890",
+                status: "ativo",
+                dataCadastro: new Date("2024-01-01"),
+                ultimaAtualizacao: new Date("2024-01-01"),
+              },
+              {
+                id: "2",
+                codigo: "P002",
+                nome: "Calça Jeans",
+                descricao: "Calça jeans skinny",
+                categoria: "Vestuário",
+                precoCusto: 45,
+                precoVenda: 89.9,
+                margemLucro: 99.78,
+                estoque: 30,
+                estoqueMinimo: 5,
+                unidade: "UN",
+                codigoBarras: "7891234567891",
+                status: "ativo",
+                dataCadastro: new Date("2024-01-02"),
+                ultimaAtualizacao: new Date("2024-01-02"),
+              },
+              {
+                id: "3",
+                codigo: "P003",
+                nome: "Vestido Floral",
+                descricao: "Vestido floral estampado",
+                categoria: "Vestuário",
+                precoCusto: 60,
+                precoVenda: 119.9,
+                margemLucro: 99.83,
+                estoque: 20,
+                estoqueMinimo: 3,
+                unidade: "UN",
+                codigoBarras: "7891234567892",
+                status: "ativo",
+                dataCadastro: new Date("2024-01-03"),
+                ultimaAtualizacao: new Date("2024-01-03"),
+              },
+            ];
+            set({ produtos: mockProdutos });
+            return mockProdutos;
+          }
+
+          // Em desenvolvimento, usa a API mockada
           const response = await fetch("/api/produtos");
           if (!response.ok) throw new Error("Erro ao carregar produtos");
           const produtos = await response.json();
