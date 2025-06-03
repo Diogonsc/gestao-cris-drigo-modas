@@ -1727,3 +1727,143 @@ export const useUsuarioStore = create<UsuarioStore>((set) => ({
     set({ error });
   },
 }));
+
+export const useEstoqueStore = create<EstoqueState>()(
+  persist(
+    (set, get) => ({
+      movimentacoes: [],
+      ajustes: [],
+      transferencias: [],
+      isLoading: false,
+      error: null,
+      adicionarMovimentacao: (movimentacao) => {
+        try {
+          set({ isLoading: true, error: null });
+          const novaMovimentacao = {
+            ...movimentacao,
+            id: crypto.randomUUID(),
+            data: new Date(),
+          };
+          set((state) => ({
+            movimentacoes: [...state.movimentacoes, novaMovimentacao],
+          }));
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao adicionar movimentação",
+          });
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      adicionarAjuste: (ajuste) => {
+        try {
+          set({ isLoading: true, error: null });
+          const novoAjuste = {
+            ...ajuste,
+            id: crypto.randomUUID(),
+            data: new Date(),
+          };
+          set((state) => ({
+            ajustes: [...state.ajustes, novoAjuste],
+          }));
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao adicionar ajuste",
+          });
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      adicionarTransferencia: (transferencia) => {
+        try {
+          set({ isLoading: true, error: null });
+          const novaTransferencia = {
+            ...transferencia,
+            id: crypto.randomUUID(),
+            data: new Date(),
+          };
+          set((state) => ({
+            transferencias: [...state.transferencias, novaTransferencia],
+          }));
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao adicionar transferência",
+          });
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      atualizarTransferencia: (id, status) => {
+        try {
+          set({ isLoading: true, error: null });
+          set((state) => ({
+            transferencias: state.transferencias.map((t) =>
+              t.id === id ? { ...t, status } : t
+            ),
+          }));
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao atualizar transferência",
+          });
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      getMovimentacoesPorProduto: (produtoId) => {
+        return get().movimentacoes.filter((m) => m.produto.id === produtoId);
+      },
+      getAjustesPorProduto: (produtoId) => {
+        return get().ajustes.filter((a) => a.produto.id === produtoId);
+      },
+      getTransferenciasPorProduto: (produtoId) => {
+        return get().transferencias.filter((t) => t.produto.id === produtoId);
+      },
+      getProdutosBaixoEstoque: () => {
+        const produtos = useProdutoStore.getState().produtos;
+        return produtos
+          .filter((p) => p.estoque < p.estoqueMinimo)
+          .map((p) => ({
+            produto: p,
+            estoqueAtual: p.estoque,
+            estoqueMinimo: p.estoqueMinimo,
+          }));
+      },
+      getProdutosSemEstoque: () => {
+        const produtos = useProdutoStore.getState().produtos;
+        return produtos.filter((p) => p.estoque === 0);
+      },
+      getHistoricoMovimentacoes: (periodo) => {
+        const movimentacoes = get().movimentacoes;
+        if (!periodo) return movimentacoes;
+        return movimentacoes.filter(
+          (m) => m.data >= periodo.inicio && m.data <= periodo.fim
+        );
+      },
+      setLoading: (isLoading) => {
+        set({ isLoading });
+      },
+      setError: (error) => {
+        set({ error });
+      },
+    }),
+    {
+      name: "estoque-storage",
+    }
+  )
+);
