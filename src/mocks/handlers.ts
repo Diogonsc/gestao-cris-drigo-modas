@@ -119,7 +119,7 @@ let clientes: Cliente[] = [
   },
 ];
 
-let vendas: Venda[] = [
+const vendas: Venda[] = [
   {
     id: "1",
     numero: "001",
@@ -131,11 +131,7 @@ let vendas: Venda[] = [
     },
     produtos: [
       {
-        produto: {
-          id: "1",
-          nome: "Camisa Básica",
-          preco: 59.9,
-        },
+        produto: produtos[0],
         quantidade: 2,
         valorUnitario: 59.9,
         valorTotal: 119.8,
@@ -157,21 +153,13 @@ let vendas: Venda[] = [
     },
     produtos: [
       {
-        produto: {
-          id: "2",
-          nome: "Calça Jeans",
-          preco: 89.9,
-        },
+        produto: produtos[1],
         quantidade: 1,
         valorUnitario: 89.9,
         valorTotal: 89.9,
       },
       {
-        produto: {
-          id: "3",
-          nome: "Vestido Floral",
-          preco: 119.9,
-        },
+        produto: produtos[2],
         quantidade: 1,
         valorUnitario: 119.9,
         valorTotal: 119.9,
@@ -179,12 +167,12 @@ let vendas: Venda[] = [
     ],
     total: 209.8,
     valorPago: 209.8,
-    formaPagamento: "cartao",
+    formaPagamento: "cartao_credito",
     status: "concluida",
   },
 ];
 
-let transacoes: TransacaoFinanceira[] = [
+const transacoes: TransacaoFinanceira[] = [
   {
     id: "1",
     data: new Date("2024-03-20"),
@@ -197,7 +185,7 @@ let transacoes: TransacaoFinanceira[] = [
     usuario: {
       id: "1",
       name: "Admin",
-      email: "admin@crisdrigo.com.br",
+      email: "crisdrigo@gmail.com",
       role: "admin",
       permissions: ["*"],
     },
@@ -209,7 +197,7 @@ let transacoes: TransacaoFinanceira[] = [
     categoria: "Vendas",
     descricao: "Venda de calça e vestido",
     valor: 209.8,
-    formaPagamento: "cartao",
+    formaPagamento: "cartao_credito",
     status: "concluida",
     usuario: {
       id: "1",
@@ -238,7 +226,7 @@ let transacoes: TransacaoFinanceira[] = [
   },
 ];
 
-let cupons: CupomFiscal[] = [
+const cupons: CupomFiscal[] = [
   {
     id: "1",
     numero: "001",
@@ -287,12 +275,12 @@ let cupons: CupomFiscal[] = [
       },
     ],
     valorTotal: 209.8,
-    formaPagamento: "cartao",
+    formaPagamento: "cartao_credito",
     status: "emitido",
   },
 ];
 
-let movimentacoes: MovimentacaoEstoque[] = [
+const movimentacoes: MovimentacaoEstoque[] = [
   {
     id: "1",
     produto: produtos[0],
@@ -373,7 +361,10 @@ export const produtoHandlers = [
 
   // Criar produto
   http.post("/api/produtos", async ({ request }) => {
-    const novoProduto = await request.json();
+    const novoProduto = (await request.json()) as Omit<
+      Produto,
+      "id" | "dataCadastro" | "ultimaAtualizacao"
+    >;
     const produto: Produto = {
       ...novoProduto,
       id: uuidv4(),
@@ -386,7 +377,9 @@ export const produtoHandlers = [
 
   // Atualizar produto
   http.put("/api/produtos/:id", async ({ params, request }) => {
-    const atualizacao = await request.json();
+    const atualizacao = (await request.json()) as Partial<
+      Omit<Produto, "id" | "dataCadastro" | "ultimaAtualizacao">
+    >;
     const index = produtos.findIndex((p) => p.id === params.id);
     if (index === -1) {
       return new HttpResponse(null, { status: 404 });
@@ -428,7 +421,10 @@ export const clienteHandlers = [
 
   // Criar cliente
   http.post("/api/clientes", async ({ request }) => {
-    const novoCliente = await request.json();
+    const novoCliente = (await request.json()) as Omit<
+      Cliente,
+      "id" | "dataCadastro"
+    >;
     const cliente: Cliente = {
       ...novoCliente,
       id: uuidv4(),
@@ -440,7 +436,9 @@ export const clienteHandlers = [
 
   // Atualizar cliente
   http.put("/api/clientes/:id", async ({ params, request }) => {
-    const atualizacao = await request.json();
+    const atualizacao = (await request.json()) as Partial<
+      Omit<Cliente, "id" | "dataCadastro">
+    >;
     const index = clientes.findIndex((c) => c.id === params.id);
     if (index === -1) {
       return new HttpResponse(null, { status: 404 });
@@ -478,7 +476,7 @@ export const vendaHandlers = [
 
   // Criar venda
   http.post("/api/vendas", async ({ request }) => {
-    const novaVenda = await request.json();
+    const novaVenda = (await request.json()) as Omit<Venda, "id" | "numero">;
     const venda: Venda = {
       ...novaVenda,
       id: uuidv4(),
@@ -517,7 +515,10 @@ export const financeiroHandlers = [
 
   // Criar transação
   http.post("/api/financeiro/transacoes", async ({ request }) => {
-    const novaTransacao = await request.json();
+    const novaTransacao = (await request.json()) as Omit<
+      TransacaoFinanceira,
+      "id" | "data"
+    >;
     const transacao: TransacaoFinanceira = {
       ...novaTransacao,
       id: uuidv4(),
@@ -529,7 +530,9 @@ export const financeiroHandlers = [
 
   // Atualizar transação
   http.put("/api/financeiro/transacoes/:id", async ({ params, request }) => {
-    const atualizacao = await request.json();
+    const atualizacao = (await request.json()) as Partial<
+      Omit<TransacaoFinanceira, "id" | "data">
+    >;
     const index = transacoes.findIndex((t) => t.id === params.id);
     if (index === -1) {
       return new HttpResponse(null, { status: 404 });
@@ -567,7 +570,10 @@ export const cupomFiscalHandlers = [
 
   // Criar cupom
   http.post("/api/cupons", async ({ request }) => {
-    const novoCupom = await request.json();
+    const novoCupom = (await request.json()) as Omit<
+      CupomFiscal,
+      "id" | "numero" | "dataEmissao"
+    >;
     const cupom: CupomFiscal = {
       ...novoCupom,
       id: uuidv4(),
@@ -607,7 +613,10 @@ export const estoqueHandlers = [
 
   // Criar movimentação
   http.post("/api/estoque/movimentacoes", async ({ request }) => {
-    const novaMovimentacao = await request.json();
+    const novaMovimentacao = (await request.json()) as Omit<
+      MovimentacaoEstoque,
+      "id" | "data"
+    >;
     const movimentacao: MovimentacaoEstoque = {
       ...novaMovimentacao,
       id: uuidv4(),

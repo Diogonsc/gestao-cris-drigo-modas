@@ -38,8 +38,8 @@ export interface RegisterData extends LoginCredentials {
   role?: "admin" | "user";
 }
 
-export class AuthService {
-  static async login({ email, password }: LoginCredentials) {
+export const AuthService = {
+  async login({ email, password }: LoginCredentials) {
     try {
       // Em produção, aqui você deve buscar o usuário no banco de dados
       // Por enquanto, vamos usar o usuário padrão
@@ -68,14 +68,9 @@ export class AuthService {
       }
       throw new Error("Erro ao realizar login");
     }
-  }
+  },
 
-  static async register({
-    name,
-    email,
-    password,
-    role = "user",
-  }: RegisterData) {
+  async register({ name, email, password, role = "user" }: RegisterData) {
     try {
       // Aqui você deve implementar a lógica de criação do usuário no banco de dados
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -100,14 +95,14 @@ export class AuthService {
     } catch (error) {
       throw new Error("Erro ao registrar usuário");
     }
-  }
+  },
 
-  static verifyToken(token: string) {
+  verifyToken(token: string) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       return decoded;
     } catch (error) {
       throw new Error("Token inválido");
     }
-  }
-}
+  },
+};

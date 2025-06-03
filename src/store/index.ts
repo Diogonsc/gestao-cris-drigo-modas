@@ -74,9 +74,11 @@ export interface ClienteState {
   clienteAtual: Cliente | null;
   isLoading: boolean;
   error: string | null;
-  adicionarCliente: (cliente: Omit<Cliente, "id" | "dataCadastro">) => void;
-  atualizarCliente: (id: string, cliente: Partial<Cliente>) => void;
-  removerCliente: (id: string) => void;
+  adicionarCliente: (
+    cliente: Omit<Cliente, "id" | "dataCadastro">
+  ) => Promise<void>;
+  atualizarCliente: (id: string, cliente: Partial<Cliente>) => Promise<void>;
+  removerCliente: (id: string) => Promise<void>;
   setClienteAtual: (cliente: Cliente | null) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
@@ -108,18 +110,18 @@ export interface ProdutoState {
   error: string | null;
   adicionarProduto: (
     produto: Omit<Produto, "id" | "dataCadastro" | "ultimaAtualizacao">
-  ) => Promise<void>;
-  atualizarProduto: (id: string, produto: Partial<Produto>) => Promise<void>;
-  removerProduto: (id: string) => Promise<void>;
+  ) => void;
+  atualizarProduto: (id: string, produto: Partial<Produto>) => void;
+  removerProduto: (id: string) => void;
   setProdutoAtual: (produto: Produto | null) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
-  fetchProdutos: () => Promise<Produto[]>;
+  fetchProdutos: () => Produto[];
   atualizarEstoque: (
     id: string,
     quantidade: number,
     tipo: "entrada" | "saida"
-  ) => Promise<void>;
+  ) => void;
   buscarProdutoPorCodigo: (codigo: string) => Produto | undefined;
   buscarProdutoPorCodigoBarras: (codigoBarras: string) => Produto | undefined;
 }
@@ -141,16 +143,12 @@ export interface Venda {
     nome: string;
     cpf: string;
   };
-  produtos: {
-    produto: {
-      id: string;
-      nome: string;
-      preco: number;
-    };
+  produtos: Array<{
+    produto: Produto;
     quantidade: number;
     valorUnitario: number;
     valorTotal: number;
-  }[];
+  }>;
   total: number;
   valorPago: number;
   formaPagamento: "dinheiro" | "cartao_credito" | "cartao_debito" | "pix";
@@ -473,6 +471,31 @@ interface UsuarioStore {
   setError: (error: string | null) => void;
 }
 
+interface VendaPorDia {
+  data: Date;
+  quantidade: number;
+  valor: number;
+}
+
+interface VendaPorFormaPagamento {
+  forma: string;
+  quantidade: number;
+  valor: number;
+}
+
+interface VendaPorCategoria {
+  categoria: string;
+  quantidade: number;
+  valor: number;
+}
+
+interface ItemVendaRelatorio {
+  produto: Produto;
+  quantidade: number;
+  valorUnitario: number;
+  valorTotal: number;
+}
+
 // Store de Autenticação
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -541,7 +564,7 @@ export const useClienteStore = create<ClienteState>()(
             body: JSON.stringify(cliente),
           });
           if (!response.ok) throw new Error("Erro ao adicionar cliente");
-          const novoCliente = await response.json();
+          const novoCliente = (await response.json()) as Cliente;
           set((state) => ({ clientes: [...state.clientes, novoCliente] }));
         } catch (error) {
           set({
@@ -555,16 +578,16 @@ export const useClienteStore = create<ClienteState>()(
           set({ isLoading: false });
         }
       },
-      atualizarCliente: async (id, clienteAtualizado) => {
+      atualizarCliente: async (id, dadosAtualizacao) => {
         try {
           set({ isLoading: true, error: null });
           const response = await fetch(`/api/clientes/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(clienteAtualizado),
+            body: JSON.stringify(dadosAtualizacao),
           });
           if (!response.ok) throw new Error("Erro ao atualizar cliente");
-          const clienteAtualizado = await response.json();
+          const clienteAtualizado = (await response.json()) as Cliente;
           set((state) => ({
             clientes: state.clientes.map((c) =>
               c.id === id ? clienteAtualizado : c
@@ -618,7 +641,7 @@ export const useClienteStore = create<ClienteState>()(
           set({ isLoading: true, error: null });
           const response = await fetch("/api/clientes");
           if (!response.ok) throw new Error("Erro ao carregar clientes");
-          const clientes = await response.json();
+          const clientes = (await response.json()) as Cliente[];
           set({ clientes });
           return clientes;
         } catch (error) {
@@ -700,7 +723,7 @@ export const useProdutoStore = create<ProdutoState>()(
       produtoAtual: null,
       isLoading: false,
       error: null,
-      adicionarProduto: async (produto) => {
+      adicionarProduto: (produto) => {
         try {
           set({ isLoading: true, error: null });
           const novoProduto = {
@@ -722,7 +745,7 @@ export const useProdutoStore = create<ProdutoState>()(
           set({ isLoading: false });
         }
       },
-      atualizarProduto: async (id, produtoAtualizado) => {
+      atualizarProduto: (id, produtoAtualizado) => {
         try {
           set({ isLoading: true, error: null });
           set((state) => ({
@@ -748,7 +771,7 @@ export const useProdutoStore = create<ProdutoState>()(
           set({ isLoading: false });
         }
       },
-      removerProduto: async (id) => {
+      removerProduto: (id) => {
         try {
           set({ isLoading: true, error: null });
           set((state) => ({
@@ -775,10 +798,11 @@ export const useProdutoStore = create<ProdutoState>()(
       setError: (error) => {
         set({ error });
       },
-      fetchProdutos: async () => {
+      fetchProdutos: () => {
         try {
           set({ isLoading: true, error: null });
           const produtos = get().produtos;
+          set({ isLoading: false });
           return produtos;
         } catch (error) {
           set({
@@ -788,11 +812,9 @@ export const useProdutoStore = create<ProdutoState>()(
                 : "Erro ao carregar produtos",
           });
           throw error;
-        } finally {
-          set({ isLoading: false });
         }
       },
-      atualizarEstoque: async (id, quantidade, tipo) => {
+      atualizarEstoque: (id, quantidade, tipo) => {
         try {
           set({ isLoading: true, error: null });
           set((state) => ({
@@ -844,7 +866,7 @@ export const useVendaStore = create<VendaState>((set, get) => ({
       set({ isLoading: true, error: null });
       const response = await fetch("/api/vendas");
       if (!response.ok) throw new Error("Erro ao carregar vendas");
-      const vendas = await response.json();
+      const vendas = (await response.json()) as Venda[];
       set({ vendas, isLoading: false });
     } catch (error) {
       set({
@@ -863,7 +885,7 @@ export const useVendaStore = create<VendaState>((set, get) => ({
         body: JSON.stringify(venda),
       });
       if (!response.ok) throw new Error("Erro ao adicionar venda");
-      const novaVenda = await response.json();
+      const novaVenda = (await response.json()) as Venda;
       set((state) => ({
         vendas: [...state.vendas, novaVenda],
         isLoading: false,
@@ -883,7 +905,7 @@ export const useVendaStore = create<VendaState>((set, get) => ({
         method: "POST",
       });
       if (!response.ok) throw new Error("Erro ao cancelar venda");
-      const vendaCancelada = await response.json();
+      const vendaCancelada = (await response.json()) as Venda;
       set((state) => ({
         vendas: state.vendas.map((v) => (v.id === id ? vendaCancelada : v)),
         isLoading: false,
@@ -896,6 +918,9 @@ export const useVendaStore = create<VendaState>((set, get) => ({
       });
     }
   },
+  setError: (error) => {
+    set({ error });
+  },
 }));
 
 // Store Financeiro
@@ -903,6 +928,7 @@ export const useFinanceiroStore = create<FinanceiroState>()(
   persist(
     (set, get) => ({
       transacoes: [],
+      transacaoAtual: null,
       isLoading: false,
       error: null,
       fetchTransacoes: async () => {
@@ -910,8 +936,9 @@ export const useFinanceiroStore = create<FinanceiroState>()(
           set({ isLoading: true, error: null });
           const response = await fetch("/api/financeiro/transacoes");
           if (!response.ok) throw new Error("Erro ao carregar transações");
-          const transacoes = await response.json();
+          const transacoes = (await response.json()) as TransacaoFinanceira[];
           set({ transacoes, isLoading: false });
+          return transacoes;
         } catch (error) {
           set({
             error:
@@ -920,23 +947,37 @@ export const useFinanceiroStore = create<FinanceiroState>()(
                 : "Erro ao carregar transações",
             isLoading: false,
           });
+          throw error;
         }
       },
-      adicionarTransacao: async (transacao) => {
+      adicionarTransacao: (transacao) => {
         try {
           set({ isLoading: true, error: null });
-          const response = await fetch("/api/financeiro/transacoes", {
+          fetch("/api/financeiro/transacoes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(transacao),
-          });
-          if (!response.ok) throw new Error("Erro ao adicionar transação");
-          const novaTransacao = await response.json();
-          set((state) => ({
-            transacoes: [...state.transacoes, novaTransacao],
-            isLoading: false,
-          }));
-        } catch (error) {
+          })
+            .then((response) => {
+              if (!response.ok) throw new Error("Erro ao adicionar transação");
+              return response.json();
+            })
+            .then((novaTransacao) => {
+              set((state) => ({
+                transacoes: [...state.transacoes, novaTransacao],
+                isLoading: false,
+              }));
+            })
+            .catch((error: unknown) => {
+              set({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "Erro ao adicionar transação",
+                isLoading: false,
+              });
+            });
+        } catch (error: unknown) {
           set({
             error:
               error instanceof Error
@@ -946,24 +987,41 @@ export const useFinanceiroStore = create<FinanceiroState>()(
           });
         }
       },
-      cancelarTransacao: async (id) => {
+      atualizarTransacao: (id, transacao) => {
+        set((state) => ({
+          transacoes: state.transacoes.map((t) =>
+            t.id === id ? { ...t, ...transacao } : t
+          ),
+        }));
+      },
+      cancelarTransacao: (id) => {
         try {
           set({ isLoading: true, error: null });
-          const response = await fetch(
-            `/api/financeiro/transacoes/${id}/cancelar`,
-            {
-              method: "POST",
-            }
-          );
-          if (!response.ok) throw new Error("Erro ao cancelar transação");
-          const transacaoCancelada = await response.json();
-          set((state) => ({
-            transacoes: state.transacoes.map((t) =>
-              t.id === id ? transacaoCancelada : t
-            ),
-            isLoading: false,
-          }));
-        } catch (error) {
+          fetch(`/api/financeiro/transacoes/${id}/cancelar`, {
+            method: "POST",
+          })
+            .then((response) => {
+              if (!response.ok) throw new Error("Erro ao cancelar transação");
+              return response.json();
+            })
+            .then((transacaoCancelada) => {
+              set((state) => ({
+                transacoes: state.transacoes.map((t) =>
+                  t.id === id ? (transacaoCancelada as TransacaoFinanceira) : t
+                ),
+                isLoading: false,
+              }));
+            })
+            .catch((error: unknown) => {
+              set({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "Erro ao cancelar transação",
+                isLoading: false,
+              });
+            });
+        } catch (error: unknown) {
           set({
             error:
               error instanceof Error
@@ -972,6 +1030,42 @@ export const useFinanceiroStore = create<FinanceiroState>()(
             isLoading: false,
           });
         }
+      },
+      setTransacaoAtual: (transacao) => {
+        set({ transacaoAtual: transacao });
+      },
+      setLoading: (isLoading) => {
+        set({ isLoading });
+      },
+      setError: (error) => {
+        set({ error });
+      },
+      getSaldo: () => {
+        return get().transacoes.reduce((total, t) => {
+          return total + (t.tipo === "receita" ? t.valor : -t.valor);
+        }, 0);
+      },
+      getReceitas: (periodo) => {
+        const transacoes = periodo
+          ? get().transacoes.filter(
+              (t) =>
+                t.tipo === "receita" &&
+                t.data >= periodo.inicio &&
+                t.data <= periodo.fim
+            )
+          : get().transacoes.filter((t) => t.tipo === "receita");
+        return transacoes.reduce((total, t) => total + t.valor, 0);
+      },
+      getDespesas: (periodo) => {
+        const transacoes = periodo
+          ? get().transacoes.filter(
+              (t) =>
+                t.tipo === "despesa" &&
+                t.data >= periodo.inicio &&
+                t.data <= periodo.fim
+            )
+          : get().transacoes.filter((t) => t.tipo === "despesa");
+        return transacoes.reduce((total, t) => total + t.valor, 0);
       },
     }),
     {
@@ -996,7 +1090,7 @@ export const useRelatorioStore = create<RelatorioState>()(
           // Busca dados das vendas
           const response = await fetch("/api/vendas");
           if (!response.ok) throw new Error("Erro ao carregar vendas");
-          const vendas = await response.json();
+          const vendas = (await response.json()) as Venda[];
 
           // Filtra vendas pelo período
           const vendasNoPeriodo = vendas.filter((venda: Venda) => {
@@ -1013,12 +1107,25 @@ export const useRelatorioStore = create<RelatorioState>()(
 
           // Agrupa vendas por dia
           const vendasPorDia = vendasNoPeriodo.reduce(
-            (acc: any[], venda: Venda) => {
-              const data = new Date(venda.data).toLocaleDateString("pt-BR");
-              const index = acc.findIndex((item) => item.data === data);
+            (acc: VendaPorDia[], venda: Venda) => {
+              const data = new Date(venda.data);
+              const index = acc.findIndex(
+                (item) => item.data.getTime() === data.getTime()
+              );
               if (index === -1) {
-                acc.push({ data, valor: venda.total });
+                acc.push({
+                  data,
+                  quantidade: venda.produtos.reduce(
+                    (total, item) => total + item.quantidade,
+                    0
+                  ),
+                  valor: venda.total,
+                });
               } else {
+                acc[index].quantidade += venda.produtos.reduce(
+                  (total, item) => total + item.quantidade,
+                  0
+                );
                 acc[index].valor += venda.total;
               }
               return acc;
@@ -1028,13 +1135,19 @@ export const useRelatorioStore = create<RelatorioState>()(
 
           // Agrupa vendas por forma de pagamento
           const vendasPorFormaPagamento = vendasNoPeriodo.reduce(
-            (acc: any[], venda: Venda) => {
+            (acc: VendaPorFormaPagamento[], venda: Venda) => {
               const index = acc.findIndex(
-                (item) => item.forma === venda.formaPagamento
+                (item: VendaPorFormaPagamento) =>
+                  item.forma === venda.formaPagamento
               );
               if (index === -1) {
-                acc.push({ forma: venda.formaPagamento, valor: venda.total });
+                acc.push({
+                  forma: venda.formaPagamento,
+                  quantidade: venda.produtos.length,
+                  valor: venda.total,
+                });
               } else {
+                acc[index].quantidade += venda.produtos.length;
                 acc[index].valor += venda.total;
               }
               return acc;
@@ -1044,15 +1157,20 @@ export const useRelatorioStore = create<RelatorioState>()(
 
           // Agrupa vendas por categoria
           const vendasPorCategoria = vendasNoPeriodo.reduce(
-            (acc: any[], venda: Venda) => {
-              venda.produtos.forEach((item: any) => {
+            (acc: VendaPorCategoria[], venda: Venda) => {
+              venda.produtos.forEach((item: ItemVendaRelatorio) => {
                 const categoria = item.produto.categoria;
                 const index = acc.findIndex(
                   (item) => item.categoria === categoria
                 );
                 if (index === -1) {
-                  acc.push({ categoria, valor: item.valorTotal });
+                  acc.push({
+                    categoria,
+                    quantidade: item.quantidade,
+                    valor: item.valorTotal,
+                  });
                 } else {
+                  acc[index].quantidade += item.quantidade;
                   acc[index].valor += item.valorTotal;
                 }
               });
@@ -1063,44 +1181,76 @@ export const useRelatorioStore = create<RelatorioState>()(
 
           // Calcula produtos mais vendidos
           const produtosMaisVendidos = vendasNoPeriodo
-            .reduce((acc: any[], venda: Venda) => {
-              venda.produtos.forEach((item: any) => {
-                const index = acc.findIndex((p) => p.id === item.produto.id);
-                if (index === -1) {
-                  acc.push({
-                    id: item.produto.id,
-                    nome: item.produto.nome,
-                    quantidade: item.quantidade,
-                    valor: item.valorTotal,
-                  });
-                } else {
-                  acc[index].quantidade += item.quantidade;
-                  acc[index].valor += item.valorTotal;
-                }
-              });
-              return acc;
-            }, [])
+            .reduce(
+              (
+                acc: Array<{
+                  produto: Produto;
+                  quantidade: number;
+                  valor: number;
+                }>,
+                venda: Venda
+              ) => {
+                const produtos = useProdutoStore.getState().produtos;
+                venda.produtos.forEach((item) => {
+                  const produto = produtos.find(
+                    (p: Produto) => p.id === item.produto.id
+                  );
+                  if (!produto) return;
+
+                  const index = acc.findIndex(
+                    (p) => p.produto.id === produto.id
+                  );
+                  if (index === -1) {
+                    acc.push({
+                      produto,
+                      quantidade: item.quantidade,
+                      valor: item.valorTotal,
+                    });
+                  } else {
+                    acc[index].quantidade += item.quantidade;
+                    acc[index].valor += item.valorTotal;
+                  }
+                });
+                return acc;
+              },
+              []
+            )
             .sort((a, b) => b.quantidade - a.quantidade)
             .slice(0, 5);
 
           // Calcula clientes mais frequentes
           const clientesMaisFrequentes = vendasNoPeriodo
-            .reduce((acc: any[], venda: Venda) => {
-              const index = acc.findIndex((c) => c.id === venda.cliente.id);
-              if (index === -1) {
-                acc.push({
-                  id: venda.cliente.id,
-                  nome: venda.cliente.nome,
-                  compras: 1,
-                  valor: venda.total,
-                });
-              } else {
-                acc[index].compras += 1;
-                acc[index].valor += venda.total;
-              }
-              return acc;
-            }, [])
-            .sort((a, b) => b.compras - a.compras)
+            .reduce(
+              (
+                acc: Array<{
+                  cliente: Cliente;
+                  quantidade: number;
+                  valor: number;
+                }>,
+                venda: Venda
+              ) => {
+                const clientes = useClienteStore.getState().clientes;
+                const cliente = clientes.find(
+                  (c: Cliente) => c.id === venda.cliente.id
+                );
+                if (!cliente) return acc;
+
+                const index = acc.findIndex((c) => c.cliente.id === cliente.id);
+                if (index === -1) {
+                  acc.push({
+                    cliente,
+                    quantidade: 1,
+                    valor: venda.total,
+                  });
+                } else {
+                  acc[index].quantidade += 1;
+                  acc[index].valor += venda.total;
+                }
+                return acc;
+              },
+              []
+            )
+            .sort((a, b) => b.quantidade - a.quantidade)
             .slice(0, 5);
 
           const relatorio = {
@@ -1134,7 +1284,7 @@ export const useRelatorioStore = create<RelatorioState>()(
           // Busca dados financeiros
           const response = await fetch("/api/financeiro/transacoes");
           if (!response.ok) throw new Error("Erro ao carregar transações");
-          const transacoes = await response.json();
+          const transacoes = (await response.json()) as TransacaoFinanceira[];
 
           // Filtra transações pelo período
           const transacoesNoPeriodo = transacoes.filter(
@@ -1160,59 +1310,128 @@ export const useRelatorioStore = create<RelatorioState>()(
             );
 
           // Agrupa transações por categoria
-          const transacoesPorCategoria = transacoesNoPeriodo.reduce(
-            (acc: any[], transacao: TransacaoFinanceira) => {
-              const index = acc.findIndex(
-                (item) => item.categoria === transacao.categoria
-              );
-              if (index === -1) {
-                acc.push({
-                  categoria: transacao.categoria,
-                  receitas: transacao.tipo === "receita" ? transacao.valor : 0,
-                  despesas: transacao.tipo === "despesa" ? transacao.valor : 0,
-                });
+          interface TransacaoPorCategoria {
+            categoria: string;
+            receitas: number;
+            despesas: number;
+          }
+
+          const transacoesPorCategoria = transacoesNoPeriodo.reduce<
+            TransacaoPorCategoria[]
+          >((acc, transacao) => {
+            const index = acc.findIndex(
+              (item) => item.categoria === transacao.categoria
+            );
+            if (index === -1) {
+              acc.push({
+                categoria: transacao.categoria,
+                receitas: transacao.tipo === "receita" ? transacao.valor : 0,
+                despesas: transacao.tipo === "despesa" ? transacao.valor : 0,
+              });
+            } else {
+              if (transacao.tipo === "receita") {
+                acc[index].receitas += transacao.valor;
               } else {
-                if (transacao.tipo === "receita") {
-                  acc[index].receitas += transacao.valor;
-                } else {
-                  acc[index].despesas += transacao.valor;
-                }
+                acc[index].despesas += transacao.valor;
               }
-              return acc;
-            },
-            []
-          );
+            }
+            return acc;
+          }, []);
 
           // Agrupa transações por dia
-          const transacoesPorDia = transacoesNoPeriodo.reduce(
-            (acc: any[], transacao: TransacaoFinanceira) => {
-              const data = new Date(transacao.data).toLocaleDateString("pt-BR");
-              const index = acc.findIndex((item) => item.data === data);
-              if (index === -1) {
-                acc.push({
-                  data,
-                  receitas: transacao.tipo === "receita" ? transacao.valor : 0,
-                  despesas: transacao.tipo === "despesa" ? transacao.valor : 0,
-                });
-              } else {
-                if (transacao.tipo === "receita") {
-                  acc[index].receitas += transacao.valor;
-                } else {
-                  acc[index].despesas += transacao.valor;
-                }
-              }
-              return acc;
-            },
-            []
-          );
+          interface TransacaoPorDia {
+            data: string;
+            receitas: number;
+            despesas: number;
+          }
 
-          const relatorio = {
+          const transacoesPorDia = transacoesNoPeriodo.reduce<
+            TransacaoPorDia[]
+          >((acc, transacao) => {
+            const data = new Date(transacao.data).toLocaleDateString("pt-BR");
+            const index = acc.findIndex((item) => item.data === data);
+            if (index === -1) {
+              acc.push({
+                data,
+                receitas: transacao.tipo === "receita" ? transacao.valor : 0,
+                despesas: transacao.tipo === "despesa" ? transacao.valor : 0,
+              });
+            } else {
+              if (transacao.tipo === "receita") {
+                acc[index].receitas += transacao.valor;
+              } else {
+                acc[index].despesas += transacao.valor;
+              }
+            }
+            return acc;
+          }, []);
+
+          const relatorio: RelatorioFinanceiro = {
             periodo,
-            saldo: receitas - despesas,
-            receitas,
-            despesas,
-            transacoesPorCategoria,
-            transacoesPorDia,
+            saldoInicial: 0, // TODO: Implementar cálculo do saldo inicial
+            saldoFinal: receitas - despesas,
+            totalReceitas: receitas,
+            totalDespesas: despesas,
+            receitasPorCategoria: transacoesPorCategoria
+              .filter((t) => t.receitas > 0)
+              .map((t) => ({
+                categoria: t.categoria,
+                quantidade: 1,
+                valor: t.receitas,
+              })),
+            despesasPorCategoria: transacoesPorCategoria
+              .filter((t) => t.despesas > 0)
+              .map((t) => ({
+                categoria: t.categoria,
+                quantidade: 1,
+                valor: t.despesas,
+              })),
+            receitasPorFormaPagamento: transacoesNoPeriodo
+              .filter((t) => t.tipo === "receita")
+              .reduce<
+                Array<{ forma: string; quantidade: number; valor: number }>
+              >((acc, t) => {
+                const index = acc.findIndex(
+                  (f) => f.forma === t.formaPagamento
+                );
+                if (index === -1) {
+                  acc.push({
+                    forma: t.formaPagamento,
+                    quantidade: 1,
+                    valor: t.valor,
+                  });
+                } else {
+                  acc[index].quantidade += 1;
+                  acc[index].valor += t.valor;
+                }
+                return acc;
+              }, []),
+            despesasPorFormaPagamento: transacoesNoPeriodo
+              .filter((t) => t.tipo === "despesa")
+              .reduce<
+                Array<{ forma: string; quantidade: number; valor: number }>
+              >((acc, t) => {
+                const index = acc.findIndex(
+                  (f) => f.forma === t.formaPagamento
+                );
+                if (index === -1) {
+                  acc.push({
+                    forma: t.formaPagamento,
+                    quantidade: 1,
+                    valor: t.valor,
+                  });
+                } else {
+                  acc[index].quantidade += 1;
+                  acc[index].valor += t.valor;
+                }
+                return acc;
+              }, []),
+            fluxoCaixa: transacoesPorDia.map((t) => ({
+              data: new Date(t.data),
+              receitas: t.receitas,
+              despesas: t.despesas,
+              saldo: t.receitas - t.despesas,
+            })),
           };
 
           set({ relatorioFinanceiro: relatorio, isLoading: false });
@@ -1243,8 +1462,9 @@ export const useRelatorioStore = create<RelatorioState>()(
           if (!movimentacoesResponse.ok)
             throw new Error("Erro ao carregar movimentações");
 
-          const produtos = await produtosResponse.json();
-          const movimentacoes = await movimentacoesResponse.json();
+          const produtos = (await produtosResponse.json()) as Produto[];
+          const movimentacoes =
+            (await movimentacoesResponse.json()) as MovimentacaoEstoque[];
 
           // Calcula totais
           const totalProdutos = produtos.length;
@@ -1254,8 +1474,14 @@ export const useRelatorioStore = create<RelatorioState>()(
           );
 
           // Agrupa produtos por categoria
-          const produtosPorCategoria = produtos.reduce(
-            (acc: any[], produto: Produto) => {
+          interface ProdutoPorCategoria {
+            categoria: string;
+            quantidade: number;
+            valor: number;
+          }
+
+          const produtosPorCategoria = produtos.reduce<ProdutoPorCategoria[]>(
+            (acc, produto) => {
               const index = acc.findIndex(
                 (item) => item.categoria === produto.categoria
               );
@@ -1292,13 +1518,29 @@ export const useRelatorioStore = create<RelatorioState>()(
             )
             .slice(0, 10);
 
-          const relatorio = {
-            totalProdutos,
-            valorTotalEstoque,
-            produtosPorCategoria,
-            produtosComEstoqueBaixo,
-            produtosSemEstoque,
-            movimentacoesRecentes,
+          const relatorio: RelatorioEstoque = {
+            produtosBaixoEstoque: produtos
+              .filter((p) => p.estoque <= p.estoqueMinimo)
+              .map((p) => ({
+                produto: p,
+                estoqueAtual: p.estoque,
+                estoqueMinimo: p.estoqueMinimo,
+              })),
+            produtosSemEstoque: produtos.filter((p) => p.estoque === 0),
+            produtosMaisVendidos: [], // TODO: Implementar lógica de produtos mais vendidos
+            produtosMenosVendidos: [], // TODO: Implementar lógica de produtos menos vendidos
+            movimentacoesEstoque: movimentacoesRecentes
+              .filter(
+                (m): m is MovimentacaoEstoque & { tipo: "entrada" | "saida" } =>
+                  m.tipo === "entrada" || m.tipo === "saida"
+              )
+              .map(({ produto, tipo, quantidade, data, motivo }) => ({
+                produto,
+                tipo,
+                quantidade,
+                data,
+                motivo,
+              })),
           };
 
           set({ relatorioEstoque: relatorio, isLoading: false });
@@ -1314,8 +1556,12 @@ export const useRelatorioStore = create<RelatorioState>()(
           throw error;
         }
       },
-      setLoading: (isLoading) => set({ isLoading }),
-      setError: (error) => set({ error }),
+      setLoading: (isLoading) => {
+        set({ isLoading });
+      },
+      setError: (error) => {
+        set({ error });
+      },
     }),
     {
       name: "relatorio-store",
@@ -1336,8 +1582,8 @@ export const useConfiguracoesStore = create<ConfiguracoesState>((set, get) => ({
   fetchConfiguracoes: async () => {
     try {
       set({ isLoading: true, error: null });
-      // Aqui você implementaria a chamada à API
-      // Por enquanto, vamos usar dados mockados
+      // Simulando uma chamada à API com delay
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const configuracoesMock: ConfiguracoesSistema = {
         empresa: {
           razaoSocial: "Cris & Drigo Modas LTDA",
@@ -1381,6 +1627,8 @@ export const useConfiguracoesStore = create<ConfiguracoesState>((set, get) => ({
   ) => {
     try {
       set({ isLoading: true, error: null });
+      // Simulando uma chamada à API com delay
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const configuracoesAtuais = get().configuracoes;
 
       if (!configuracoesAtuais) {
@@ -1414,7 +1662,8 @@ export const useConfiguracoesStore = create<ConfiguracoesState>((set, get) => ({
   realizarBackup: async () => {
     try {
       set({ isLoading: true, error: null });
-      // Aqui você implementaria a lógica de backup
+      // Simulando uma chamada à API com delay
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const configuracoes = get().configuracoes;
       if (!configuracoes) {
         throw new Error("Configurações não carregadas");
@@ -1460,7 +1709,8 @@ export const useEstoqueStore = create<EstoqueState>()(
           set({ isLoading: true, error: null });
           const response = await fetch("/api/estoque/movimentacoes");
           if (!response.ok) throw new Error("Erro ao carregar movimentações");
-          const movimentacoes = await response.json();
+          const movimentacoes =
+            (await response.json()) as MovimentacaoEstoque[];
           set({ movimentacoes, isLoading: false });
         } catch (error) {
           set({
@@ -1472,37 +1722,39 @@ export const useEstoqueStore = create<EstoqueState>()(
           });
         }
       },
-      adicionarMovimentacao: async (movimentacao) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await fetch("/api/estoque/movimentacoes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(movimentacao),
+      adicionarMovimentacao: (movimentacao) => {
+        set({ isLoading: true, error: null });
+        fetch("/api/estoque/movimentacoes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(movimentacao),
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("Erro ao adicionar movimentação");
+            return response.json();
+          })
+          .then((novaMovimentacao) => {
+            set((state) => ({
+              movimentacoes: [...state.movimentacoes, novaMovimentacao],
+              isLoading: false,
+            }));
+          })
+          .catch((error: unknown) => {
+            set({
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Erro ao adicionar movimentação",
+              isLoading: false,
+            });
           });
-          if (!response.ok) throw new Error("Erro ao adicionar movimentação");
-          const novaMovimentacao = await response.json();
-          set((state) => ({
-            movimentacoes: [...state.movimentacoes, novaMovimentacao],
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Erro ao adicionar movimentação",
-            isLoading: false,
-          });
-        }
       },
       getProdutosBaixoEstoque: () => {
         try {
-          const produtos =
-            require("./index").useProdutoStore.getState().produtos || [];
+          const produtos = useProdutoStore.getState().produtos;
           return produtos
-            .filter((p) => p.estoque <= p.estoqueMinimo)
-            .map((p) => ({
+            .filter((p: Produto) => p.estoque <= p.estoqueMinimo)
+            .map((p: Produto) => ({
               produto: p,
               estoqueAtual: p.estoque,
               estoqueMinimo: p.estoqueMinimo,
@@ -1513,16 +1765,15 @@ export const useEstoqueStore = create<EstoqueState>()(
       },
       getProdutosSemEstoque: () => {
         try {
-          const produtos =
-            require("./index").useProdutoStore.getState().produtos || [];
-          return produtos.filter((p) => p.estoque === 0);
+          const produtos = useProdutoStore.getState().produtos;
+          return produtos.filter((p: Produto) => p.estoque === 0);
         } catch {
           return [];
         }
       },
       getHistoricoMovimentacoes: (periodo?: { inicio: Date; fim: Date }) => {
         try {
-          const movimentacoes = get().movimentacoes || [];
+          const movimentacoes = get().movimentacoes;
           if (!periodo) return movimentacoes;
           return movimentacoes.filter((m) => {
             const dataMov = new Date(m.data);
@@ -1531,6 +1782,44 @@ export const useEstoqueStore = create<EstoqueState>()(
         } catch {
           return [];
         }
+      },
+      adicionarAjuste: (ajuste) => {
+        set((state) => ({
+          ajustes: [
+            ...state.ajustes,
+            { ...ajuste, id: crypto.randomUUID(), data: new Date() },
+          ],
+        }));
+      },
+      adicionarTransferencia: (transferencia) => {
+        set((state) => ({
+          transferencias: [
+            ...state.transferencias,
+            { ...transferencia, id: crypto.randomUUID(), data: new Date() },
+          ],
+        }));
+      },
+      atualizarTransferencia: (id, status) => {
+        set((state) => ({
+          transferencias: state.transferencias.map((t) =>
+            t.id === id ? { ...t, status } : t
+          ),
+        }));
+      },
+      getMovimentacoesPorProduto: (produtoId) => {
+        return get().movimentacoes.filter((m) => m.produto.id === produtoId);
+      },
+      getAjustesPorProduto: (produtoId) => {
+        return get().ajustes.filter((a) => a.produto.id === produtoId);
+      },
+      getTransferenciasPorProduto: (produtoId) => {
+        return get().transferencias.filter((t) => t.produto.id === produtoId);
+      },
+      setLoading: (isLoading) => {
+        set({ isLoading });
+      },
+      setError: (error) => {
+        set({ error });
       },
     }),
     {
@@ -1549,7 +1838,8 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
       set({ loading: true, error: null });
       // TODO: Implementar chamada à API
       const response = await fetch("/api/usuarios");
-      const data = await response.json();
+      if (!response.ok) throw new Error("Erro ao carregar usuários");
+      const data = (await response.json()) as Usuario[];
       set({ usuarios: data, loading: false });
     } catch (error) {
       set({
@@ -1571,7 +1861,8 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
         },
         body: JSON.stringify(usuario),
       });
-      const data = await response.json();
+      if (!response.ok) throw new Error("Erro ao adicionar usuário");
+      const data = (await response.json()) as Usuario;
       set((state) => ({
         usuarios: [...state.usuarios, data],
         loading: false,
@@ -1597,7 +1888,8 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
         },
         body: JSON.stringify(usuario),
       });
-      const data = await response.json();
+      if (!response.ok) throw new Error("Erro ao atualizar usuário");
+      const data = (await response.json()) as Usuario;
       set((state) => ({
         usuarios: state.usuarios.map((u) =>
           u.id === id ? { ...u, ...data } : u
@@ -1635,5 +1927,7 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
     }
   },
 
-  setError: (error) => set({ error }),
+  setError: (error) => {
+    set({ error });
+  },
 }));
