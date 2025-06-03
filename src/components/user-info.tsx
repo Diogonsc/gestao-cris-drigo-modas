@@ -22,7 +22,7 @@ import { useTheme } from "@/providers/theme-provider";
 export function UserInfo() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const nome = "Diogo Nascimento";
+  const nome = "Rodrigo Vianna";
   const iniciais = nome
     .split(" ")
     .map((n) => n[0])
@@ -37,7 +37,7 @@ export function UserInfo() {
   return (
     <div className="flex items-center justify-between gap-2">
       <Avatar>
-        <AvatarImage src="https://github.com/diogonsc.png" alt={nome} />
+        <AvatarImage src="#" alt={nome} />
         <AvatarFallback>{iniciais}</AvatarFallback>
       </Avatar>
       <div className="text-sm flex-1">
