@@ -5,10 +5,32 @@ import { cn } from "@/lib/utils";
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, error, ...props }, ref) => {
+  ({ className, type, error, inputRef, ...props }, ref) => {
+    // Combinando as refs usando useCallback
+    const combinedRef = React.useCallback(
+      (element: HTMLInputElement | null) => {
+        // Atualiza a ref externa
+        if (typeof ref === "function") {
+          ref(element);
+        } else if (ref) {
+          ref.current = element;
+        }
+        // Atualiza a inputRef se fornecida
+        if (typeof inputRef === "function") {
+          inputRef(element);
+        } else if (inputRef) {
+          (
+            inputRef as React.MutableRefObject<HTMLInputElement | null>
+          ).current = element;
+        }
+      },
+      [ref, inputRef]
+    );
+
     return (
       <div className="relative">
         <input
@@ -18,7 +40,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             error && "border-destructive focus-visible:ring-destructive",
             className
           )}
-          ref={ref}
+          ref={combinedRef}
           {...props}
         />
         {error && <p className="text-sm text-destructive mt-1">{error}</p>}

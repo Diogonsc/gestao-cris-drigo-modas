@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext, Controller } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { InputMask } from "../ui/input-mask";
@@ -56,15 +56,13 @@ export function ListaItens() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Itens do Cupom</h3>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Itens do Cupom</h2>
         <Button
           type="button"
-          variant="outline"
-          size="sm"
           onClick={adicionarItem}
-          className="flex items-center gap-2"
           disabled={isSubmitting}
+          className="flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
           Adicionar Item
@@ -74,7 +72,7 @@ export function ListaItens() {
       <div className="grid gap-4">
         {fields.map((field, index) => (
           <Card key={field.id} className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor={`itens.${index}.codigo`}>Código</Label>
                 <Input
@@ -98,9 +96,8 @@ export function ListaItens() {
               <div>
                 <Label htmlFor={`itens.${index}.quantidade`}>Quantidade</Label>
                 <Input
-                  type="number"
-                  min="1"
                   id={`itens.${index}.quantidade`}
+                  type="number"
                   {...register(`itens.${index}.quantidade`, {
                     valueAsNumber: true,
                   })}
@@ -113,18 +110,22 @@ export function ListaItens() {
                 <Label htmlFor={`itens.${index}.valorUnitario`}>
                   Valor Unitário
                 </Label>
-                <InputMask
-                  mask="999999.99"
-                  maskChar=""
-                  id={`itens.${index}.valorUnitario`}
-                  {...register(`itens.${index}.valorUnitario`, {
-                    setValueAs: (value) => {
-                      const number = parseFloat(value.replace(",", "."));
-                      return isNaN(number) ? 0 : number;
-                    },
-                  })}
-                  error={errors.itens?.[index]?.valorUnitario?.message}
-                  disabled={isSubmitting}
+                <Controller
+                  name={`itens.${index}.valorUnitario`}
+                  control={control}
+                  render={({ field }) => (
+                    <InputMask
+                      {...field}
+                      mask="999999.99"
+                      maskChar=""
+                      placeholder="0,00"
+                      disabled={isSubmitting}
+                      onChange={(value) => {
+                        const number = parseFloat(value.replace(",", "."));
+                        field.onChange(isNaN(number) ? 0 : number);
+                      }}
+                    />
+                  )}
                 />
               </div>
             </div>

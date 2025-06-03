@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,6 +33,7 @@ import { formatarMoeda } from "../../lib/utils";
 import { InputMask } from "../ui/input-mask";
 import { Card, CardContent } from "../ui/card";
 import { Form } from "../ui/form";
+import { Controller } from "react-hook-form";
 
 const schemaVenda = z.object({
   cliente: z.object({
@@ -66,18 +67,6 @@ interface FormVendaProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
-
-// Componente InputMask customizado que aceita ref
-const MaskedInput = forwardRef<HTMLInputElement, any>((props, ref) => {
-  const { mask, maskChar, ...rest } = props;
-  return (
-    <InputMask mask={mask} maskChar={maskChar} {...rest}>
-      {(inputProps: any) => <Input {...inputProps} ref={ref} />}
-    </InputMask>
-  );
-});
-
-MaskedInput.displayName = "MaskedInput";
 
 export function FormVenda({ venda, onSuccess, onCancel }: FormVendaProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -237,240 +226,244 @@ export function FormVenda({ venda, onSuccess, onCancel }: FormVendaProps) {
 
   return (
     <Card>
-      <Form {...{ control, register, handleSubmit, errors }}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Cliente</Label>
+      <Form {...control}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cliente.id">Cliente</Label>
+                <Controller
+                  name="cliente.id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clientes.map((cliente) => (
+                          <SelectItem key={cliente.id} value={cliente.id}>
+                            {cliente.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FormFeedback error={errors.cliente?.id?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
+                <Controller
+                  name="formaPagamento"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a forma de pagamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="cartao_credito">
+                          Cartão de Crédito
+                        </SelectItem>
+                        <SelectItem value="cartao_debito">
+                          Cartão de Débito
+                        </SelectItem>
+                        <SelectItem value="pix">PIX</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FormFeedback error={errors.formaPagamento?.message} />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Itens da Venda</h3>
+                <Button type="button" onClick={handleAddItem}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Item
+                </Button>
+              </div>
+
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar cliente..."
-                  value={searchCliente}
-                  onChange={(e) => setSearchCliente(e.target.value)}
+                  placeholder="Buscar produto..."
+                  value={searchProduto}
+                  onChange={(e) => setSearchProduto(e.target.value)}
                   className="pl-8"
                 />
               </div>
-              <div className="max-h-48 overflow-y-auto border rounded-md">
-                {clientesFiltrados.map((cliente) => (
-                  <div
-                    key={cliente.id}
-                    className={`p-2 cursor-pointer hover:bg-accent ${
-                      clienteId === cliente.id ? "bg-accent" : ""
-                    }`}
-                    onClick={() => setValue("cliente.id", cliente.id)}
-                  >
-                    <div className="font-medium">{cliente.nome}</div>
-                    <div className="text-sm text-muted-foreground">
-                      CPF: {cliente.cpf}
-                    </div>
-                  </div>
-                ))}
+
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead>Quantidade</TableHead>
+                      <TableHead>Valor Unit.</TableHead>
+                      <TableHead>Desconto</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fields.map((field, index) => (
+                      <TableRow key={field.id}>
+                        <TableCell>
+                          <Select
+                            value={field.produto.id}
+                            onValueChange={(value) =>
+                              handleProdutoChange(index, value)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o produto" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {produtosFiltrados.map((produto) => (
+                                <SelectItem key={produto.id} value={produto.id}>
+                                  {produto.nome} - {produto.codigo}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormFeedback
+                            error={errors.itens?.[index]?.produto?.id?.message}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="1"
+                            {...register(`itens.${index}.quantidade`, {
+                              valueAsNumber: true,
+                              onChange: (e) =>
+                                handleQuantidadeChange(
+                                  index,
+                                  e.target.valueAsNumber
+                                ),
+                            })}
+                          />
+                          <FormFeedback
+                            error={errors.itens?.[index]?.quantidade?.message}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            {...register(`itens.${index}.valorUnitario`, {
+                              valueAsNumber: true,
+                            })}
+                          />
+                          <FormFeedback
+                            error={
+                              errors.itens?.[index]?.valorUnitario?.message
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            {...register(`itens.${index}.desconto`, {
+                              valueAsNumber: true,
+                            })}
+                          />
+                          <FormFeedback
+                            error={errors.itens?.[index]?.desconto?.message}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {formatarMoeda(
+                            (field.valorUnitario || 0) *
+                              (field.quantidade || 0) -
+                              (field.desconto || 0)
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-              <FormFeedback error={errors.cliente?.id?.message} />
+              <FormFeedback error={errors.itens?.message} />
             </div>
 
             <div className="space-y-2">
-              <Label>Forma de Pagamento</Label>
-              <Select
-                defaultValue={venda?.formaPagamento || "dinheiro"}
-                onValueChange={(value) =>
-                  setValue(
-                    "formaPagamento",
-                    value as FormVendaData["formaPagamento"]
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a forma de pagamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                  <SelectItem value="cartao_credito">
-                    Cartão de Crédito
-                  </SelectItem>
-                  <SelectItem value="cartao_debito">
-                    Cartão de Débito
-                  </SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormFeedback error={errors.formaPagamento?.message} />
+              <Label>Observações</Label>
+              <Input {...register("observacoes")} />
+              <FormFeedback error={errors.observacoes?.message} />
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Itens da Venda</h3>
-              <Button type="button" onClick={handleAddItem}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Item
+            <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+              <div className="space-y-1">
+                <div className="text-sm text-muted-foreground">Subtotal</div>
+                <div className="text-2xl font-bold">
+                  {formatarMoeda(subtotal)}
+                </div>
+              </div>
+              <div className="space-y-1 text-right">
+                <div className="text-sm text-muted-foreground">Total</div>
+                <div className="text-2xl font-bold">
+                  {formatarMoeda(subtotal)}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <Loading size="sm" text="Salvando..." />
+                ) : venda ? (
+                  "Atualizar"
+                ) : (
+                  "Finalizar Venda"
+                )}
               </Button>
             </div>
 
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar produto..."
-                value={searchProduto}
-                onChange={(e) => setSearchProduto(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Quantidade</TableHead>
-                    <TableHead>Valor Unit.</TableHead>
-                    <TableHead>Desconto</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fields.map((field, index) => (
-                    <TableRow key={field.id}>
-                      <TableCell>
-                        <Select
-                          value={field.produto.id}
-                          onValueChange={(value) =>
-                            handleProdutoChange(index, value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o produto" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {produtosFiltrados.map((produto) => (
-                              <SelectItem key={produto.id} value={produto.id}>
-                                {produto.nome} - {produto.codigo}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormFeedback
-                          error={errors.itens?.[index]?.produto?.id?.message}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="1"
-                          {...register(`itens.${index}.quantidade`, {
-                            valueAsNumber: true,
-                            onChange: (e) =>
-                              handleQuantidadeChange(
-                                index,
-                                e.target.valueAsNumber
-                              ),
-                          })}
-                        />
-                        <FormFeedback
-                          error={errors.itens?.[index]?.quantidade?.message}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register(`itens.${index}.valorUnitario`, {
-                            valueAsNumber: true,
-                          })}
-                        />
-                        <FormFeedback
-                          error={errors.itens?.[index]?.valorUnitario?.message}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register(`itens.${index}.desconto`, {
-                            valueAsNumber: true,
-                          })}
-                        />
-                        <FormFeedback
-                          error={errors.itens?.[index]?.desconto?.message}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {formatarMoeda(
-                          (field.valorUnitario || 0) * (field.quantidade || 0) -
-                            (field.desconto || 0)
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <FormFeedback error={errors.itens?.message} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Observações</Label>
-            <Input {...register("observacoes")} />
-            <FormFeedback error={errors.observacoes?.message} />
-          </div>
-
-          <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Subtotal</div>
-              <div className="text-2xl font-bold">
-                {formatarMoeda(subtotal)}
-              </div>
-            </div>
-            <div className="space-y-1 text-right">
-              <div className="text-sm text-muted-foreground">Total</div>
-              <div className="text-2xl font-bold">
-                {formatarMoeda(subtotal)}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <Loading size="sm" text="Salvando..." />
-              ) : venda ? (
-                "Atualizar"
-              ) : (
-                "Finalizar Venda"
-              )}
-            </Button>
-          </div>
-
-          <DialogConfirm
-            open={showConfirmCancel}
-            onOpenChange={setShowConfirmCancel}
-            title="Cancelar venda"
-            description="Existem dados não salvos. Deseja realmente cancelar?"
-            onConfirm={() => {
-              setShowConfirmCancel(false);
-              onCancel?.();
-            }}
-          />
+            <DialogConfirm
+              open={showConfirmCancel}
+              onOpenChange={setShowConfirmCancel}
+              title="Cancelar venda"
+              description="Existem dados não salvos. Deseja realmente cancelar?"
+              onConfirm={() => {
+                setShowConfirmCancel(false);
+                onCancel?.();
+              }}
+            />
+          </CardContent>
         </form>
       </Form>
     </Card>

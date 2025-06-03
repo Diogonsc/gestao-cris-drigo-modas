@@ -1,10 +1,12 @@
-import { useState, forwardRef } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputMask } from "@/components/ui/input-mask";
+import { Label } from "@/components/ui/label";
 import { Form } from "@/components/ui/form";
 import { CustomFormField } from "@/components/form-field";
 import {
@@ -18,7 +20,15 @@ import {
 import { Cliente } from "@/types";
 import { buscarCep } from "@/services/enderecoService";
 import { adicionarCliente, atualizarCliente } from "@/services/mockData";
-import InputMask from "react-input-mask";
+import { FormFeedback } from "@/components/ui/form-feedback";
+import { DialogConfirm } from "@/components/ui/dialog-confirm";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Schema de validação
 const clienteSchema = z.object({
@@ -44,18 +54,6 @@ interface ClienteFormProps {
   cliente?: Cliente;
   onSuccess: () => void;
 }
-
-// Componente InputMask customizado que aceita ref
-const MaskedInput = forwardRef<HTMLInputElement, any>((props, ref) => {
-  const { mask, maskChar, ...rest } = props;
-  return (
-    <InputMask mask={mask} maskChar={maskChar} {...rest}>
-      {(inputProps: any) => <Input {...inputProps} ref={ref} />}
-    </InputMask>
-  );
-});
-
-MaskedInput.displayName = "MaskedInput";
 
 export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
   const { toast } = useToast();
@@ -218,7 +216,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   label="CPF"
                   control={form.control}
                   render={({ field }) => (
-                    <MaskedInput
+                    <InputMask
                       {...field}
                       mask="999.999.999-99"
                       maskChar={null}
@@ -247,7 +245,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   label="Telefone"
                   control={form.control}
                   render={({ field }) => (
-                    <MaskedInput
+                    <InputMask
                       {...field}
                       mask="(99) 99999-9999"
                       maskChar={null}
@@ -263,7 +261,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   label="WhatsApp"
                   control={form.control}
                   render={({ field }) => (
-                    <MaskedInput
+                    <InputMask
                       {...field}
                       mask="(99) 99999-9999"
                       maskChar={null}
@@ -291,7 +289,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   label="CEP"
                   control={form.control}
                   render={({ field }) => (
-                    <MaskedInput
+                    <InputMask
                       {...field}
                       mask="99999-999"
                       maskChar={null}

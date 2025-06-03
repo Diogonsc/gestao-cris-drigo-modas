@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Loader2, Save, Trash2 } from "lucide-react";
+import { Controller } from "react-hook-form";
 
 const cupomSchema = z.object({
   cliente: z.object({
@@ -70,6 +71,7 @@ export function EmissorCupom() {
     handleSubmit,
     formState: { errors, isDirty },
     reset,
+    control,
   } = methods;
 
   const onSubmit = async (data: CupomFormData) => {
@@ -161,14 +163,18 @@ export function EmissorCupom() {
 
               <div>
                 <Label htmlFor="cliente.cpf">CPF</Label>
-                <InputMask
-                  id="cliente.cpf"
-                  mask="999.999.999-99"
-                  maskChar=""
-                  {...register("cliente.cpf")}
-                  error={errors.cliente?.cpf?.message}
-                  placeholder="000.000.000-00"
-                  disabled={isLoading}
+                <Controller
+                  name="cliente.cpf"
+                  control={control}
+                  render={({ field }) => (
+                    <InputMask
+                      {...field}
+                      mask="999.999.999-99"
+                      maskChar=""
+                      placeholder="000.000.000-00"
+                      disabled={isLoading}
+                    />
+                  )}
                 />
               </div>
 
