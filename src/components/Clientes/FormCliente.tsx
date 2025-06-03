@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { InputMask } from "../ui/input-mask";
+import { InputMask, InputMaskProps } from "../ui/input-mask";
 import { Label } from "../ui/label";
 import { useToast } from "../ui/use-toast";
 import { useClienteStore } from "../../store";
@@ -77,17 +77,25 @@ const estados = [
   "TO",
 ];
 
-// Componente InputMask customizado que aceita ref
-const MaskedInput = forwardRef<HTMLInputElement, any>((props, ref) => {
-  const { mask, maskChar, ...rest } = props;
-  return (
-    <InputMask mask={mask} maskChar={maskChar} {...rest}>
-      {(inputProps: any) => <Input {...inputProps} ref={ref} />}
-    </InputMask>
-  );
-});
+// Componente InputMask customizado com tipagem correta
+const MaskedInput = forwardRef<HTMLInputElement, InputMaskProps>(
+  (props, ref) => {
+    const { mask, maskChar, ...rest } = props;
+    return (
+      <InputMask
+        mask={mask}
+        maskChar={maskChar === null ? undefined : maskChar}
+        {...rest}
+        ref={ref}
+      />
+    );
+  }
+);
 
 MaskedInput.displayName = "MaskedInput";
+
+// Função mock para handleCepBlur (ajuste conforme sua lógica real)
+const handleCepBlur = () => {};
 
 export function FormCliente({
   cliente,
@@ -126,17 +134,17 @@ export function FormCliente({
     },
   });
 
-  const onSubmit = (data: FormClienteData) => {
+  const onSubmit = async (data: FormClienteData) => {
     try {
       setIsSubmitting(true);
       if (cliente) {
-        atualizarCliente(cliente.id, data);
+        await atualizarCliente(cliente.id, data);
         toast({
           title: "Cliente atualizado",
           description: "Os dados do cliente foram atualizados com sucesso.",
         });
       } else {
-        adicionarCliente(data);
+        await adicionarCliente(data);
         toast({
           title: "Cliente cadastrado",
           description: "O cliente foi cadastrado com sucesso.",
@@ -168,7 +176,11 @@ export function FormCliente({
 
   return (
     <Card>
-      <Form {...control}>
+      <Form
+        {...{
+          ...useForm<FormClienteData>({ resolver: zodResolver(schemaCliente) }),
+        }}
+      >
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -197,7 +209,7 @@ export function FormCliente({
                     <MaskedInput
                       {...field}
                       mask="999.999.999-99"
-                      maskChar={null}
+                      maskChar={undefined}
                       placeholder="000.000.000-00"
                       type="tel"
                       autoComplete="off"
@@ -228,7 +240,7 @@ export function FormCliente({
                     <MaskedInput
                       {...field}
                       mask="(99) 99999-9999"
-                      maskChar={null}
+                      maskChar={undefined}
                       placeholder="(00) 00000-0000"
                       type="tel"
                       autoComplete="tel"
@@ -248,7 +260,7 @@ export function FormCliente({
                     <MaskedInput
                       {...field}
                       mask="99999-999"
-                      maskChar={null}
+                      maskChar={undefined}
                       placeholder="00000-000"
                       type="tel"
                       autoComplete="postal-code"

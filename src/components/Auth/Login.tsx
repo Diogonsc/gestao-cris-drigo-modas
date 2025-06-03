@@ -31,14 +31,19 @@ export function Login() {
   const { toast } = useToast();
   const { theme } = useTheme();
 
-  const from = (location.state as LocationState)?.from?.pathname || "/";
+  const from = (location.state as LocationState).from?.pathname ?? "/";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      // Mock do token por enquanto - ajuste conforme sua lógica real de autenticação
+      const token = "mock-token";
+      login(
+        { id: "1", name: "Usuário", email, role: "user", permissions: [] },
+        token
+      );
       toast({
         title: "Login realizado com sucesso!",
         description: "Você será redirecionado em instantes.",
@@ -62,10 +67,10 @@ export function Login() {
         <div className="max-w-md space-y-6">
           <div className="flex items-center gap-3 mb-8">
             <Package className="h-8 w-8" />
-            <h1 className="text-3xl font-bold">Cris & Drigo Modas</h1>
+            <h1 className="text-3xl font-bold">Omnix</h1>
           </div>
           <h2 className="text-4xl font-bold mb-4">
-            Bem-vindo ao Sistema de Gestão
+            Sistema de Gestão Inteligente
           </h2>
           <p className="text-lg text-primary-foreground/80">
             Gerencie seu negócio de forma eficiente e organizada. Acompanhe
@@ -104,7 +109,7 @@ export function Login() {
           <div className="text-center lg:text-left">
             <div className="flex items-center justify-center lg:justify-start gap-3 mb-8 lg:hidden">
               <Package className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">Cris & Drigo Modas</h1>
+              <h1 className="text-3xl font-bold">Omnix</h1>
             </div>
             <h2 className="text-2xl font-bold tracking-tight">
               Acesse sua conta
@@ -127,7 +132,9 @@ export function Login() {
                         type="email"
                         placeholder="seu@email.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                        }}
                         required
                         disabled={isLoading}
                         className="pl-9"
@@ -143,7 +150,9 @@ export function Login() {
                         type="password"
                         placeholder="••••••••"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                        }}
                         required
                         disabled={isLoading}
                         className="pl-9"
@@ -169,7 +178,9 @@ export function Login() {
                   <Button
                     variant="link"
                     className="text-sm text-primary hover:text-primary/80"
-                    onClick={() => navigate("/forgot-password")}
+                    onClick={() => {
+                      navigate("/forgot-password");
+                    }}
                   >
                     Esqueceu a senha?
                   </Button>
@@ -188,8 +199,7 @@ export function Login() {
           </Card>
 
           <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Cris & Drigo Modas. Todos os direitos
-            reservados.
+            © {new Date().getFullYear()} Omnix. Todos os direitos reservados.
           </p>
         </div>
       </div>

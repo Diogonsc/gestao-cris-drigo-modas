@@ -315,7 +315,7 @@ export default function Relatorios() {
                       { forma: "PIX", valor: 3200 },
                     ].map((entry, index) => (
                       <Cell
-                        key={`cell-${entry.forma}`}
+                        key={`cell-${String(index)}`}
                         fill={COLORS[index % COLORS.length]}
                       />
                     ))}
@@ -344,7 +344,7 @@ export default function Relatorios() {
                 />
                 <YAxis />
                 <Tooltip
-                  labelFormatter={(value) => formatarData(value)}
+                  labelFormatter={(value: string | Date) => formatarData(value)}
                   formatter={(value) => formatarMoeda(value as number)}
                 />
                 <Legend />
@@ -504,7 +504,7 @@ export default function Relatorios() {
                 />
                 <YAxis />
                 <Tooltip
-                  labelFormatter={(value) => formatarData(value)}
+                  labelFormatter={(value: string | Date) => formatarData(value)}
                   formatter={(value) => formatarMoeda(value as number)}
                 />
                 <Legend />
@@ -559,7 +559,7 @@ export default function Relatorios() {
                     {relatorioFinanceiro.receitasPorCategoria.map(
                       (entry, index) => (
                         <Cell
-                          key={`cell-${index}`}
+                          key={`cell-${String(index)}`}
                           fill={COLORS[index % COLORS.length]}
                         />
                       )
@@ -595,7 +595,7 @@ export default function Relatorios() {
                     {relatorioFinanceiro.despesasPorCategoria.map(
                       (entry, index) => (
                         <Cell
-                          key={`cell-${index}`}
+                          key={`cell-${String(index)}`}
                           fill={COLORS[index % COLORS.length]}
                         />
                       )
@@ -836,7 +836,7 @@ export default function Relatorios() {
                         { categoria: "Macacões", quantidade: 15 },
                       ].map((entry, index) => (
                         <Cell
-                          key={`cell-${index}`}
+                          key={`cell-${String(index)}`}
                           fill={COLORS[index % COLORS.length]}
                         />
                       ))}
@@ -990,7 +990,12 @@ export default function Relatorios() {
         </div>
         <div className="text-center text-red-500 p-4">
           <p>Erro ao gerar relatório: {error}</p>
-          <Button onClick={handleGerarRelatorio} className="mt-4">
+          <Button
+            onClick={() => {
+              void handleGerarRelatorio();
+            }}
+            className="mt-4"
+          >
             Tentar novamente
           </Button>
         </div>
@@ -1065,58 +1070,53 @@ export default function Relatorios() {
           </div>
 
           <Button
-            onClick={() => void handleGerarRelatorio()}
-            disabled={isLoading}
+            onClick={() => {
+              void handleGerarRelatorio();
+            }}
             className="w-full"
           >
-            {isLoading ? "Gerando..." : "Gerar Relatório"}
+            Gerar Relatório
           </Button>
         </CardContent>
       </Card>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loading />
-        </div>
-      ) : (
-        <Tabs value={tipoRelatorio} onValueChange={handleTipoRelatorioChange}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="vendas">Vendas</TabsTrigger>
-            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-            <TabsTrigger value="estoque">Estoque</TabsTrigger>
-          </TabsList>
+      <Tabs value={tipoRelatorio} onValueChange={handleTipoRelatorioChange}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="vendas">Vendas</TabsTrigger>
+          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="estoque">Estoque</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="vendas">
-            {relatorioVendas ? (
-              renderGraficoVendas()
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                Nenhum dado disponível para o período selecionado.
-              </div>
-            )}
-          </TabsContent>
+        <TabsContent value="vendas">
+          {relatorioVendas ? (
+            renderGraficoVendas()
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              Nenhum dado disponível para o período selecionado.
+            </div>
+          )}
+        </TabsContent>
 
-          <TabsContent value="financeiro">
-            {relatorioFinanceiro ? (
-              renderGraficoFinanceiro()
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                Nenhum dado disponível para o período selecionado.
-              </div>
-            )}
-          </TabsContent>
+        <TabsContent value="financeiro">
+          {relatorioFinanceiro ? (
+            renderGraficoFinanceiro()
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              Nenhum dado disponível para o período selecionado.
+            </div>
+          )}
+        </TabsContent>
 
-          <TabsContent value="estoque">
-            {relatorioEstoque ? (
-              renderGraficoEstoque()
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                Nenhum dado disponível para o período selecionado.
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      )}
+        <TabsContent value="estoque">
+          {relatorioEstoque ? (
+            renderGraficoEstoque()
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              Nenhum dado disponível para o período selecionado.
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
