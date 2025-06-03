@@ -385,10 +385,41 @@ export const useConfiguracoesStore = create<ConfiguracoesState>()(
       fetchConfiguracoes: async () => {
         try {
           set({ isLoading: true, error: null });
-          const response = await fetch("/api/configuracoes");
-          if (!response.ok) throw new Error("Erro ao carregar configurações");
-          const configuracoes = await response.json();
-          set({ configuracoes, isLoading: false });
+          // Usando dados mockados em vez de chamada à API
+          const configuracoesMock = {
+            empresa: {
+              razaoSocial: "Cris & Drigo Modas",
+              nomeFantasia: "Cris & Drigo Modas",
+              cnpj: "12.345.678/0001-90",
+              inscricaoEstadual: "123.456.789",
+              endereco: {
+                logradouro: "Rua Exemplo",
+                numero: "123",
+                bairro: "Centro",
+                cidade: "São Paulo",
+                estado: "SP",
+                cep: "01234-567",
+              },
+              contato: {
+                telefone: "(11) 1234-5678",
+                email: "contato@crisdrigo.com.br",
+              },
+            },
+            fiscal: {
+              regimeTributario: "simples" as
+                | "simples"
+                | "lucro_presumido"
+                | "lucro_real",
+              cnae: "4781-4/00",
+              serieNFe: "1",
+              numeroNFe: "1",
+            },
+            tema: "claro",
+            idioma: "pt-BR",
+            backupAutomatico: true,
+            intervaloBackup: 24,
+          };
+          set({ configuracoes: configuracoesMock, isLoading: false });
         } catch (error) {
           set({
             error:
@@ -1215,24 +1246,9 @@ export const useRelatorioStore = create<RelatorioState>()(
           console.log("Iniciando geração de relatório de vendas:", periodo);
           set({ isLoading: true, error: null });
 
-          console.log("Fazendo requisição para /api/vendas");
-          const response = await fetch("/api/vendas");
-          console.log(
-            "Resposta recebida:",
-            response.status,
-            response.statusText
-          );
-
-          if (!response.ok) {
-            const text = await response.text();
-            console.error("Erro na resposta:", text);
-            throw new Error(
-              `Erro ao carregar vendas: ${response.status} ${response.statusText}`
-            );
-          }
-
-          const vendas = (await response.json()) as Venda[];
-          console.log("Vendas carregadas da API:", vendas);
+          // Usando dados do store local em vez de chamada à API
+          const vendas = useVendaStore.getState().vendas;
+          console.log("Vendas carregadas do store:", vendas);
 
           // Filtra vendas pelo período
           const vendasFiltradas = vendas.filter(
@@ -1380,11 +1396,9 @@ export const useRelatorioStore = create<RelatorioState>()(
           console.log("Iniciando geração de relatório financeiro:", periodo);
           set({ isLoading: true, error: null });
 
-          const response = await fetch("/api/financeiro/transacoes");
-          if (!response.ok) throw new Error("Erro ao carregar transações");
-          const transacoes = (await response.json()) as TransacaoFinanceira[];
-
-          console.log("Transações carregadas da API:", transacoes);
+          // Usando dados do store local em vez de chamada à API
+          const transacoes = useFinanceiroStore.getState().transacoes;
+          console.log("Transações carregadas do store:", transacoes);
 
           // Filtra transações pelo período
           const transacoesFiltradas = transacoes.filter(
@@ -1530,14 +1544,9 @@ export const useRelatorioStore = create<RelatorioState>()(
           console.log("Gerando relatório de estoque para o período:", periodo);
           set({ isLoading: true, error: null });
 
-          // Busca produtos
-          const produtos = await api.get<Produto[]>("/produtos");
-          if (!Array.isArray(produtos)) {
-            throw new Error(
-              "Resposta inválida da API: produtos não é um array"
-            );
-          }
-          console.log("Produtos carregados:", produtos);
+          // Usando dados do store local em vez de chamada à API
+          const produtos = useProdutoStore.getState().produtos;
+          console.log("Produtos carregados do store:", produtos);
 
           // Agrupa produtos por categoria
           const produtosPorCategoria = produtos.reduce<
