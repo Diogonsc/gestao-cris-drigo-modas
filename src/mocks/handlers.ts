@@ -17,7 +17,7 @@ let produtos: Produto[] = [
     codigo: "P001",
     nome: "Camisa Básica",
     descricao: "Camisa básica de algodão",
-    categoria: "Vestuário",
+    categoria: "Camisetas",
     precoCusto: 30,
     precoVenda: 59.9,
     margemLucro: 99.67,
@@ -34,7 +34,7 @@ let produtos: Produto[] = [
     codigo: "P002",
     nome: "Calça Jeans",
     descricao: "Calça jeans skinny",
-    categoria: "Vestuário",
+    categoria: "Calças",
     precoCusto: 45,
     precoVenda: 89.9,
     margemLucro: 99.78,
@@ -51,7 +51,7 @@ let produtos: Produto[] = [
     codigo: "P003",
     nome: "Vestido Floral",
     descricao: "Vestido floral estampado",
-    categoria: "Vestuário",
+    categoria: "Vestidos",
     precoCusto: 60,
     precoVenda: 119.9,
     margemLucro: 99.83,
@@ -62,6 +62,159 @@ let produtos: Produto[] = [
     status: "ativo",
     dataCadastro: new Date("2024-01-03"),
     ultimaAtualizacao: new Date("2024-01-03"),
+  },
+  {
+    id: "4",
+    codigo: "P004",
+    nome: "Blusa de Frio",
+    descricao: "Blusa de frio com capuz",
+    categoria: "Blusas",
+    precoCusto: 55,
+    precoVenda: 99.9,
+    margemLucro: 81.64,
+    estoque: 15,
+    estoqueMinimo: 5,
+    unidade: "UN",
+    codigoBarras: "7891234567893",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-04"),
+    ultimaAtualizacao: new Date("2024-01-04"),
+  },
+  {
+    id: "5",
+    codigo: "P005",
+    nome: "Short Jeans",
+    descricao: "Short jeans desfiado",
+    categoria: "Shorts",
+    precoCusto: 35,
+    precoVenda: 69.9,
+    margemLucro: 99.71,
+    estoque: 25,
+    estoqueMinimo: 8,
+    unidade: "UN",
+    codigoBarras: "7891234567894",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-05"),
+    ultimaAtualizacao: new Date("2024-01-05"),
+  },
+  {
+    id: "6",
+    codigo: "P006",
+    nome: "Saia Midi",
+    descricao: "Saia midi plissada",
+    categoria: "Saias",
+    precoCusto: 40,
+    precoVenda: 79.9,
+    margemLucro: 99.75,
+    estoque: 18,
+    estoqueMinimo: 5,
+    unidade: "UN",
+    codigoBarras: "7891234567895",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-06"),
+    ultimaAtualizacao: new Date("2024-01-06"),
+  },
+  {
+    id: "7",
+    codigo: "P007",
+    nome: "Blazer Social",
+    descricao: "Blazer social slim fit",
+    categoria: "Blazers",
+    precoCusto: 80,
+    precoVenda: 159.9,
+    margemLucro: 99.88,
+    estoque: 12,
+    estoqueMinimo: 3,
+    unidade: "UN",
+    codigoBarras: "7891234567896",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-07"),
+    ultimaAtualizacao: new Date("2024-01-07"),
+  },
+  {
+    id: "8",
+    codigo: "P008",
+    nome: "Legging Fitness",
+    descricao: "Legging fitness alta compressão",
+    categoria: "Fitness",
+    precoCusto: 45,
+    precoVenda: 89.9,
+    margemLucro: 99.78,
+    estoque: 35,
+    estoqueMinimo: 10,
+    unidade: "UN",
+    codigoBarras: "7891234567897",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-08"),
+    ultimaAtualizacao: new Date("2024-01-08"),
+  },
+  {
+    id: "9",
+    codigo: "P009",
+    nome: "Top Esportivo",
+    descricao: "Top esportivo com suporte",
+    categoria: "Fitness",
+    precoCusto: 25,
+    precoVenda: 49.9,
+    margemLucro: 99.6,
+    estoque: 40,
+    estoqueMinimo: 12,
+    unidade: "UN",
+    codigoBarras: "7891234567898",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-09"),
+    ultimaAtualizacao: new Date("2024-01-09"),
+  },
+  {
+    id: "10",
+    codigo: "P010",
+    nome: "Conjunto Pijama",
+    descricao: "Conjunto pijama algodão",
+    categoria: "Pijamas",
+    precoCusto: 50,
+    precoVenda: 99.9,
+    margemLucro: 99.8,
+    estoque: 22,
+    estoqueMinimo: 6,
+    unidade: "UN",
+    codigoBarras: "7891234567899",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-10"),
+    ultimaAtualizacao: new Date("2024-01-10"),
+  },
+  {
+    id: "11",
+    codigo: "P011",
+    nome: "Bermuda Cargo",
+    descricao: "Bermuda cargo masculina",
+    categoria: "Bermudas",
+    precoCusto: 40,
+    precoVenda: 79.9,
+    margemLucro: 99.75,
+    estoque: 28,
+    estoqueMinimo: 8,
+    unidade: "UN",
+    codigoBarras: "7891234567900",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-11"),
+    ultimaAtualizacao: new Date("2024-01-11"),
+  },
+  {
+    id: "12",
+    codigo: "P012",
+    nome: "Macacão Jeans",
+    descricao: "Macacão jeans com alça",
+    categoria: "Macacões",
+    precoCusto: 65,
+    precoVenda: 129.9,
+    margemLucro: 99.85,
+    estoque: 15,
+    estoqueMinimo: 4,
+    unidade: "UN",
+    codigoBarras: "7891234567901",
+    status: "ativo",
+    dataCadastro: new Date("2024-01-12"),
+    ultimaAtualizacao: new Date("2024-01-12"),
   },
 ];
 
@@ -281,9 +434,10 @@ const cupons: CupomFiscal[] = [
 ];
 
 const movimentacoes: MovimentacaoEstoque[] = [
+  // Entradas iniciais
   {
     id: "1",
-    produto: produtos[0],
+    produto: produtos[0], // Camisa Básica
     tipo: "entrada",
     quantidade: 50,
     data: new Date("2024-01-01"),
@@ -298,7 +452,7 @@ const movimentacoes: MovimentacaoEstoque[] = [
   },
   {
     id: "2",
-    produto: produtos[1],
+    produto: produtos[1], // Calça Jeans
     tipo: "entrada",
     quantidade: 30,
     data: new Date("2024-01-02"),
@@ -311,13 +465,14 @@ const movimentacoes: MovimentacaoEstoque[] = [
       permissions: ["*"],
     },
   },
+  // Saídas por vendas
   {
     id: "3",
-    produto: produtos[2],
-    tipo: "entrada",
-    quantidade: 20,
-    data: new Date("2024-01-03"),
-    motivo: "Entrada inicial",
+    produto: produtos[0], // Camisa Básica
+    tipo: "saida",
+    quantidade: 2,
+    data: new Date("2024-03-20"),
+    motivo: "Venda #001",
     usuario: {
       id: "1",
       name: "Admin",
@@ -328,11 +483,200 @@ const movimentacoes: MovimentacaoEstoque[] = [
   },
   {
     id: "4",
-    produto: produtos[0],
+    produto: produtos[1], // Calça Jeans
     tipo: "saida",
-    quantidade: 2,
-    data: new Date("2024-03-20"),
-    motivo: "Venda",
+    quantidade: 1,
+    data: new Date("2024-03-21"),
+    motivo: "Venda #002",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: "5",
+    produto: produtos[2], // Vestido Floral
+    tipo: "saida",
+    quantidade: 1,
+    data: new Date("2024-03-21"),
+    motivo: "Venda #002",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  // Novas entradas
+  {
+    id: "6",
+    produto: produtos[3], // Blusa de Frio
+    tipo: "entrada",
+    quantidade: 15,
+    data: new Date("2024-03-22"),
+    motivo: "Reposição de estoque",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: "7",
+    produto: produtos[4], // Short Jeans
+    tipo: "entrada",
+    quantidade: 25,
+    data: new Date("2024-03-22"),
+    motivo: "Reposição de estoque",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  // Ajustes de estoque
+  {
+    id: "8",
+    produto: produtos[0], // Camisa Básica
+    tipo: "ajuste",
+    quantidade: -1,
+    data: new Date("2024-03-23"),
+    motivo: "Ajuste de inventário - Produto com defeito",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: "9",
+    produto: produtos[5], // Saia Midi
+    tipo: "entrada",
+    quantidade: 18,
+    data: new Date("2024-03-24"),
+    motivo: "Nova coleção",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: "10",
+    produto: produtos[6], // Blazer Social
+    tipo: "entrada",
+    quantidade: 12,
+    data: new Date("2024-03-24"),
+    motivo: "Nova coleção",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  // Saídas recentes
+  {
+    id: "11",
+    produto: produtos[7], // Legging Fitness
+    tipo: "saida",
+    quantidade: 5,
+    data: new Date("2024-03-25"),
+    motivo: "Venda #003",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: "12",
+    produto: produtos[8], // Top Esportivo
+    tipo: "saida",
+    quantidade: 3,
+    data: new Date("2024-03-25"),
+    motivo: "Venda #003",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  // Transferências entre lojas
+  {
+    id: "13",
+    produto: produtos[9], // Conjunto Pijama
+    tipo: "transferencia",
+    quantidade: 5,
+    data: new Date("2024-03-26"),
+    motivo: "Transferência para loja 2",
+    origem: "Loja Principal",
+    destino: "Loja 2",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: "14",
+    produto: produtos[10], // Bermuda Cargo
+    tipo: "transferencia",
+    quantidade: 8,
+    data: new Date("2024-03-26"),
+    motivo: "Transferência para loja 2",
+    origem: "Loja Principal",
+    destino: "Loja 2",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  // Últimas movimentações
+  {
+    id: "15",
+    produto: produtos[11], // Macacão Jeans
+    tipo: "entrada",
+    quantidade: 15,
+    data: new Date("2024-03-27"),
+    motivo: "Reposição de estoque",
+    usuario: {
+      id: "1",
+      name: "Admin",
+      email: "admin@crisdrigo.com.br",
+      role: "admin",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: "16",
+    produto: produtos[0], // Camisa Básica
+    tipo: "saida",
+    quantidade: 3,
+    data: new Date("2024-03-27"),
+    motivo: "Venda #004",
     usuario: {
       id: "1",
       name: "Admin",
@@ -342,6 +686,28 @@ const movimentacoes: MovimentacaoEstoque[] = [
     },
   },
 ];
+
+// Dados mockados para configurações
+const configuracoes = {
+  tema: "dark",
+  corPrimaria: "#2563eb",
+  corSecundaria: "#4f46e5",
+  corAcentuacao: "#7c3aed",
+  corSucesso: "#16a34a",
+  corErro: "#dc2626",
+  corAlerta: "#d97706",
+  corInfo: "#0284c7",
+  fontePrincipal: "Inter",
+  tamanhoFonte: "medium",
+  arredondamento: "medium",
+  densidade: "comfortable",
+  animacoes: true,
+  notificacoes: true,
+  backupAutomatico: true,
+  intervaloBackup: "diario",
+  ultimoBackup: new Date().toISOString(),
+  versao: "1.0.0",
+};
 
 // Handlers para Produtos
 export const produtoHandlers = [
@@ -462,6 +828,8 @@ export const clienteHandlers = [
 export const vendaHandlers = [
   // Listar vendas
   http.get("/api/vendas", () => {
+    console.log("MSW: Interceptando requisição GET /api/vendas");
+    console.log("MSW: Retornando vendas:", vendas);
     return HttpResponse.json(vendas);
   }),
 
@@ -627,6 +995,54 @@ export const estoqueHandlers = [
   }),
 ];
 
+// Handlers para Configurações
+export const configuracoesHandlers = [
+  // Buscar configurações
+  http.get("/api/configuracoes", () => {
+    console.log("MSW: Interceptando requisição GET /api/configuracoes");
+    console.log("MSW: Retornando configurações:", configuracoes);
+    return HttpResponse.json(configuracoes);
+  }),
+
+  // Atualizar configurações
+  http.put("/api/configuracoes", async ({ request }) => {
+    console.log("MSW: Interceptando requisição PUT /api/configuracoes");
+    const atualizacao = await request.json();
+    Object.assign(configuracoes, atualizacao);
+    console.log("MSW: Configurações atualizadas:", configuracoes);
+    return HttpResponse.json(configuracoes);
+  }),
+
+  // Resetar configurações
+  http.post("/api/configuracoes/resetar", () => {
+    console.log(
+      "MSW: Interceptando requisição POST /api/configuracoes/resetar"
+    );
+    Object.assign(configuracoes, {
+      tema: "dark",
+      corPrimaria: "#2563eb",
+      corSecundaria: "#4f46e5",
+      corAcentuacao: "#7c3aed",
+      corSucesso: "#16a34a",
+      corErro: "#dc2626",
+      corAlerta: "#d97706",
+      corInfo: "#0284c7",
+      fontePrincipal: "Inter",
+      tamanhoFonte: "medium",
+      arredondamento: "medium",
+      densidade: "comfortable",
+      animacoes: true,
+      notificacoes: true,
+      backupAutomatico: true,
+      intervaloBackup: "diario",
+      ultimoBackup: new Date().toISOString(),
+      versao: "1.0.0",
+    });
+    console.log("MSW: Configurações resetadas:", configuracoes);
+    return HttpResponse.json(configuracoes);
+  }),
+];
+
 // Exporta todos os handlers
 export const handlers = [
   ...produtoHandlers,
@@ -635,4 +1051,5 @@ export const handlers = [
   ...financeiroHandlers,
   ...cupomFiscalHandlers,
   ...estoqueHandlers,
+  ...configuracoesHandlers,
 ];

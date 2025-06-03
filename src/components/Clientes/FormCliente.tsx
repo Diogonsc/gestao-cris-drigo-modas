@@ -11,7 +11,7 @@ import { Cliente } from "../../store";
 import { Loading } from "../ui/loading";
 import { FormFeedback } from "../ui/form-feedback";
 import { DialogConfirm } from "../ui/dialog-confirm";
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import {
   Select,
   SelectContent,
@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Card, CardContent } from "../ui/card";
+import { Form } from "../ui/form";
 
 const schemaCliente = z.object({
   nome: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
@@ -74,6 +76,18 @@ const estados = [
   "SE",
   "TO",
 ];
+
+// Componente InputMask customizado que aceita ref
+const MaskedInput = forwardRef<HTMLInputElement, any>((props, ref) => {
+  const { mask, maskChar, ...rest } = props;
+  return (
+    <InputMask mask={mask} maskChar={maskChar} {...rest}>
+      {(inputProps: any) => <Input {...inputProps} ref={ref} />}
+    </InputMask>
+  );
+});
+
+MaskedInput.displayName = "MaskedInput";
 
 export function FormCliente({
   cliente,
@@ -153,196 +167,216 @@ export function FormCliente({
   };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void handleSubmit(onSubmit)(e);
-      }}
-      className="space-y-4"
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="nome">Nome</Label>
-          <Input id="nome" {...register("nome")} error={errors.nome?.message} />
-          <FormFeedback error={errors.nome?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="cpf">CPF</Label>
-          <Controller
-            name="cpf"
-            control={control}
-            render={({ field }) => (
-              <InputMask
-                id="cpf"
-                mask="999.999.999-99"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.cpf?.message}
-              />
-            )}
-          />
-          <FormFeedback error={errors.cpf?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
-          <Input
-            id="email"
-            type="email"
-            {...register("email")}
-            error={errors.email?.message}
-          />
-          <FormFeedback error={errors.email?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="telefone">Telefone</Label>
-          <Controller
-            name="telefone"
-            control={control}
-            render={({ field }) => (
-              <InputMask
-                id="telefone"
-                mask="(99) 99999-9999"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.telefone?.message}
-              />
-            )}
-          />
-          <FormFeedback error={errors.telefone?.message} />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="cep">CEP</Label>
-          <Controller
-            name="endereco.cep"
-            control={control}
-            render={({ field }) => (
-              <InputMask
-                id="cep"
-                mask="99999-999"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.endereco?.cep?.message}
-              />
-            )}
-          />
-          <FormFeedback error={errors.endereco?.cep?.message} />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="logradouro">Logradouro</Label>
-          <Input
-            id="logradouro"
-            {...register("endereco.logradouro")}
-            error={errors.endereco?.logradouro?.message}
-          />
-          <FormFeedback error={errors.endereco?.logradouro?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="numero">Número</Label>
-          <Input
-            id="numero"
-            {...register("endereco.numero")}
-            error={errors.endereco?.numero?.message}
-          />
-          <FormFeedback error={errors.endereco?.numero?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="complemento">Complemento</Label>
-          <Input
-            id="complemento"
-            {...register("endereco.complemento")}
-            error={errors.endereco?.complemento?.message}
-          />
-          <FormFeedback error={errors.endereco?.complemento?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="bairro">Bairro</Label>
-          <Input
-            id="bairro"
-            {...register("endereco.bairro")}
-            error={errors.endereco?.bairro?.message}
-          />
-          <FormFeedback error={errors.endereco?.bairro?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="cidade">Cidade</Label>
-          <Input
-            id="cidade"
-            {...register("endereco.cidade")}
-            error={errors.endereco?.cidade?.message}
-          />
-          <FormFeedback error={errors.endereco?.cidade?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="estado">Estado</Label>
-          <Select
-            defaultValue={cliente?.endereco.estado}
-            onValueChange={(value) => {
-              setValue("endereco.estado", value);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o estado" />
-            </SelectTrigger>
-            <SelectContent>
-              {estados.map((estado) => (
-                <SelectItem key={estado} value={estado}>
-                  {estado}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormFeedback error={errors.endereco?.estado?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select
-            defaultValue={cliente?.status || "ativo"}
-            onValueChange={(value) => {
-              setValue("status", value as "ativo" | "inativo");
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="inativo">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
-          <FormFeedback error={errors.status?.message} />
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSubmitting}
+    <Card>
+      <Form {...control}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSubmit(onSubmit)(e);
+          }}
+          className="space-y-4"
         >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <Loading size="sm" text="Salvando..." />
-          ) : cliente ? (
-            "Atualizar"
-          ) : (
-            "Cadastrar"
-          )}
-        </Button>
-      </div>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome</Label>
+                <Input
+                  id="nome"
+                  {...register("nome")}
+                  error={errors.nome?.message}
+                />
+                <FormFeedback error={errors.nome?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cpf">CPF</Label>
+                <Controller
+                  name="cpf"
+                  control={control}
+                  render={({ field }) => (
+                    <MaskedInput
+                      {...field}
+                      mask="999.999.999-99"
+                      maskChar={null}
+                      placeholder="000.000.000-00"
+                      type="tel"
+                      autoComplete="off"
+                      disabled={isSubmitting}
+                    />
+                  )}
+                />
+                <FormFeedback error={errors.cpf?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                  error={errors.email?.message}
+                />
+                <FormFeedback error={errors.email?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Controller
+                  name="telefone"
+                  control={control}
+                  render={({ field }) => (
+                    <MaskedInput
+                      {...field}
+                      mask="(99) 99999-9999"
+                      maskChar={null}
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      autoComplete="tel"
+                      disabled={isSubmitting}
+                    />
+                  )}
+                />
+                <FormFeedback error={errors.telefone?.message} />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="cep">CEP</Label>
+                <Controller
+                  name="endereco.cep"
+                  control={control}
+                  render={({ field }) => (
+                    <MaskedInput
+                      {...field}
+                      mask="99999-999"
+                      maskChar={null}
+                      placeholder="00000-000"
+                      type="tel"
+                      autoComplete="postal-code"
+                      disabled={isSubmitting}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        void handleCepBlur();
+                      }}
+                    />
+                  )}
+                />
+                <FormFeedback error={errors.endereco?.cep?.message} />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="logradouro">Logradouro</Label>
+                <Input
+                  id="logradouro"
+                  {...register("endereco.logradouro")}
+                  error={errors.endereco?.logradouro?.message}
+                />
+                <FormFeedback error={errors.endereco?.logradouro?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numero">Número</Label>
+                <Input
+                  id="numero"
+                  {...register("endereco.numero")}
+                  error={errors.endereco?.numero?.message}
+                />
+                <FormFeedback error={errors.endereco?.numero?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="complemento">Complemento</Label>
+                <Input
+                  id="complemento"
+                  {...register("endereco.complemento")}
+                  error={errors.endereco?.complemento?.message}
+                />
+                <FormFeedback error={errors.endereco?.complemento?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bairro">Bairro</Label>
+                <Input
+                  id="bairro"
+                  {...register("endereco.bairro")}
+                  error={errors.endereco?.bairro?.message}
+                />
+                <FormFeedback error={errors.endereco?.bairro?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cidade">Cidade</Label>
+                <Input
+                  id="cidade"
+                  {...register("endereco.cidade")}
+                  error={errors.endereco?.cidade?.message}
+                />
+                <FormFeedback error={errors.endereco?.cidade?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="estado">Estado</Label>
+                <Select
+                  defaultValue={cliente?.endereco.estado}
+                  onValueChange={(value) => {
+                    setValue("endereco.estado", value);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estados.map((estado) => (
+                      <SelectItem key={estado} value={estado}>
+                        {estado}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormFeedback error={errors.endereco?.estado?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  defaultValue={cliente?.status || "ativo"}
+                  onValueChange={(value) => {
+                    setValue("status", value as "ativo" | "inativo");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormFeedback error={errors.status?.message} />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <Loading size="sm" text="Salvando..." />
+                ) : cliente ? (
+                  "Atualizar"
+                ) : (
+                  "Cadastrar"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </form>
+      </Form>
 
       <DialogConfirm
         open={showConfirmCancel}
@@ -354,6 +388,6 @@ export function FormCliente({
           onCancel?.();
         }}
       />
-    </form>
+    </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -44,6 +44,18 @@ interface ClienteFormProps {
   cliente?: Cliente;
   onSuccess: () => void;
 }
+
+// Componente InputMask customizado que aceita ref
+const MaskedInput = forwardRef<HTMLInputElement, any>((props, ref) => {
+  const { mask, maskChar, ...rest } = props;
+  return (
+    <InputMask mask={mask} maskChar={maskChar} {...rest}>
+      {(inputProps: any) => <Input {...inputProps} ref={ref} />}
+    </InputMask>
+  );
+});
+
+MaskedInput.displayName = "MaskedInput";
 
 export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
   const { toast } = useToast();
@@ -205,23 +217,16 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="cpf"
                   label="CPF"
                   control={form.control}
-                  render={({ field: { ref, ...field } }) => (
-                    <InputMask
+                  render={({ field }) => (
+                    <MaskedInput
+                      {...field}
                       mask="999.999.999-99"
                       maskChar={null}
-                      {...field}
+                      placeholder="000.000.000-00"
+                      type="tel"
+                      autoComplete="off"
                       disabled={isLoading}
-                    >
-                      {(inputProps: any) => (
-                        <Input
-                          {...inputProps}
-                          ref={ref}
-                          placeholder="000.000.000-00"
-                          type="tel"
-                          autoComplete="off"
-                        />
-                      )}
-                    </InputMask>
+                    />
                   )}
                 />
                 <CustomFormField
@@ -241,46 +246,32 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="telefone"
                   label="Telefone"
                   control={form.control}
-                  render={({ field: { ref, ...field } }) => (
-                    <InputMask
+                  render={({ field }) => (
+                    <MaskedInput
+                      {...field}
                       mask="(99) 99999-9999"
                       maskChar={null}
-                      {...field}
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      autoComplete="tel"
                       disabled={isLoading}
-                    >
-                      {(inputProps: any) => (
-                        <Input
-                          {...inputProps}
-                          ref={ref}
-                          placeholder="(00) 00000-0000"
-                          type="tel"
-                          autoComplete="tel"
-                        />
-                      )}
-                    </InputMask>
+                    />
                   )}
                 />
                 <CustomFormField
                   name="whatsapp"
                   label="WhatsApp"
                   control={form.control}
-                  render={({ field: { ref, ...field } }) => (
-                    <InputMask
+                  render={({ field }) => (
+                    <MaskedInput
+                      {...field}
                       mask="(99) 99999-9999"
                       maskChar={null}
-                      {...field}
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      autoComplete="tel"
                       disabled={isLoading}
-                    >
-                      {(inputProps: any) => (
-                        <Input
-                          {...inputProps}
-                          ref={ref}
-                          placeholder="(00) 00000-0000"
-                          type="tel"
-                          autoComplete="tel"
-                        />
-                      )}
-                    </InputMask>
+                    />
                   )}
                 />
               </div>
@@ -299,27 +290,20 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
                   name="endereco.cep"
                   label="CEP"
                   control={form.control}
-                  render={({ field: { ref, ...field } }) => (
-                    <InputMask
+                  render={({ field }) => (
+                    <MaskedInput
+                      {...field}
                       mask="99999-999"
                       maskChar={null}
-                      {...field}
+                      placeholder="00000-000"
+                      type="tel"
+                      autoComplete="postal-code"
+                      disabled={isLoading}
                       onBlur={(e) => {
                         field.onBlur();
                         void handleCepBlur();
                       }}
-                      disabled={isLoading}
-                    >
-                      {(inputProps: any) => (
-                        <Input
-                          {...inputProps}
-                          ref={ref}
-                          placeholder="00000-000"
-                          type="tel"
-                          autoComplete="postal-code"
-                        />
-                      )}
-                    </InputMask>
+                    />
                   )}
                 />
                 <div className="md:col-span-2">

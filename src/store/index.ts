@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { api } from "@/lib/api";
 
 // Tipos
 export interface User {
@@ -207,18 +208,17 @@ export interface FinanceiroState {
   getDespesas: (periodo?: { inicio: Date; fim: Date }) => number;
 }
 
-export interface RelatorioVendas {
-  periodo: {
-    inicio: Date;
-    fim: Date;
-  };
+type ClienteResumido = {
+  id: string;
+  nome: string;
+  cpf: string;
+};
+
+type RelatorioVendas = {
+  periodo: { inicio: Date; fim: Date };
   totalVendas: number;
   valorTotal: number;
-  vendasPorDia: Array<{
-    data: Date;
-    quantidade: number;
-    valor: number;
-  }>;
+  vendasPorDia: Array<{ data: Date; quantidade: number; valor: number }>;
   vendasPorFormaPagamento: Array<{
     forma: string;
     quantidade: number;
@@ -235,11 +235,11 @@ export interface RelatorioVendas {
     valor: number;
   }>;
   clientesMaisFrequentes: Array<{
-    cliente: Cliente;
+    cliente: ClienteResumido;
     quantidade: number;
     valor: number;
   }>;
-}
+};
 
 export interface RelatorioFinanceiro {
   periodo: {
@@ -279,28 +279,21 @@ export interface RelatorioFinanceiro {
 }
 
 export interface RelatorioEstoque {
+  periodo: { inicio: Date; fim: Date };
+  totalProdutos: number;
+  produtosPorCategoria: Array<{
+    categoria: string;
+    quantidade: number;
+  }>;
   produtosBaixoEstoque: Array<{
     produto: Produto;
     estoqueAtual: number;
     estoqueMinimo: number;
   }>;
-  produtosSemEstoque: Produto[];
-  produtosMaisVendidos: Array<{
+  produtosSemEstoque: Array<{
     produto: Produto;
-    quantidadeVendida: number;
-    valorVendido: number;
-  }>;
-  produtosMenosVendidos: Array<{
-    produto: Produto;
-    quantidadeVendida: number;
-    valorVendido: number;
-  }>;
-  movimentacoesEstoque: Array<{
-    produto: Produto;
-    tipo: "entrada" | "saida";
-    quantidade: number;
-    data: Date;
-    motivo: string;
+    estoqueAtual: number;
+    estoqueMinimo: number;
   }>;
 }
 
@@ -318,7 +311,10 @@ export interface RelatorioState {
     inicio: Date;
     fim: Date;
   }) => Promise<RelatorioFinanceiro>;
-  gerarRelatorioEstoque: () => Promise<RelatorioEstoque>;
+  gerarRelatorioEstoque: (periodo: {
+    inicio: Date;
+    fim: Date;
+  }) => Promise<RelatorioEstoque>;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -377,6 +373,136 @@ interface ConfiguracoesState {
   realizarBackup: () => Promise<void>;
   restaurarBackup: (data: Date) => Promise<void>;
 }
+
+// Store de Configurações
+export const useConfiguracoesStore = create<ConfiguracoesState>()(
+  persist(
+    (set, get) => ({
+      configuracoes: null,
+      isLoading: false,
+      error: null,
+
+      fetchConfiguracoes: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await fetch("/api/configuracoes");
+          if (!response.ok) throw new Error("Erro ao carregar configurações");
+          const configuracoes = await response.json();
+          set({ configuracoes, isLoading: false });
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao carregar configurações",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      atualizarConfiguracoes: async (novasConfiguracoes) => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await fetch("/api/configuracoes", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(novasConfiguracoes),
+          });
+          if (!response.ok) throw new Error("Erro ao atualizar configurações");
+          const configuracoesAtualizadas = await response.json();
+          set({ configuracoes: configuracoesAtualizadas, isLoading: false });
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao atualizar configurações",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      resetarConfiguracoes: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await fetch("/api/configuracoes/reset", {
+            method: "POST",
+          });
+          if (!response.ok) throw new Error("Erro ao resetar configurações");
+          const configuracoesPadrao = await response.json();
+          set({ configuracoes: configuracoesPadrao, isLoading: false });
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao resetar configurações",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      realizarBackup: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await fetch("/api/configuracoes/backup", {
+            method: "POST",
+          });
+          if (!response.ok) throw new Error("Erro ao realizar backup");
+          const backup = await response.json();
+          set((state) => ({
+            configuracoes: state.configuracoes
+              ? { ...state.configuracoes, ultimoBackup: new Date(backup.data) }
+              : null,
+            isLoading: false,
+          }));
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao realizar backup",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      restaurarBackup: async (data) => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await fetch(
+            `/api/configuracoes/backup/${data.toISOString()}`,
+            {
+              method: "POST",
+            }
+          );
+          if (!response.ok) throw new Error("Erro ao restaurar backup");
+          const configuracoesRestauradas = await response.json();
+          set({ configuracoes: configuracoesRestauradas, isLoading: false });
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao restaurar backup",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+    }),
+    {
+      name: "configuracoes-store",
+      partialize: (state) => ({
+        configuracoes: state.configuracoes,
+      }),
+    }
+  )
+);
 
 export interface MovimentacaoEstoque {
   id: string;
@@ -1083,190 +1209,158 @@ export const useRelatorioStore = create<RelatorioState>()(
       relatorioEstoque: null,
       isLoading: false,
       error: null,
-      gerarRelatorioVendas: async (periodo) => {
+
+      gerarRelatorioVendas: async (periodo: { inicio: Date; fim: Date }) => {
         try {
+          console.log("Iniciando geração de relatório de vendas:", periodo);
           set({ isLoading: true, error: null });
 
-          // Busca dados das vendas
+          console.log("Fazendo requisição para /api/vendas");
           const response = await fetch("/api/vendas");
-          if (!response.ok) throw new Error("Erro ao carregar vendas");
+          console.log(
+            "Resposta recebida:",
+            response.status,
+            response.statusText
+          );
+
+          if (!response.ok) {
+            const text = await response.text();
+            console.error("Erro na resposta:", text);
+            throw new Error(
+              `Erro ao carregar vendas: ${response.status} ${response.statusText}`
+            );
+          }
+
           const vendas = (await response.json()) as Venda[];
+          console.log("Vendas carregadas da API:", vendas);
 
           // Filtra vendas pelo período
-          const vendasNoPeriodo = vendas.filter((venda: Venda) => {
-            const dataVenda = new Date(venda.data);
-            return dataVenda >= periodo.inicio && dataVenda <= periodo.fim;
-          });
+          const vendasFiltradas = vendas.filter(
+            (venda) =>
+              new Date(venda.data) >= periodo.inicio &&
+              new Date(venda.data) <= periodo.fim
+          );
+
+          console.log("Vendas filtradas por período:", vendasFiltradas);
 
           // Calcula totais
-          const totalVendas = vendasNoPeriodo.length;
-          const valorTotal = vendasNoPeriodo.reduce(
-            (total: number, venda: Venda) => total + venda.total,
+          const totalVendas = vendasFiltradas.reduce(
+            (total, venda) => total + venda.total,
             0
           );
 
           // Agrupa vendas por dia
-          const vendasPorDia = vendasNoPeriodo.reduce(
-            (acc: VendaPorDia[], venda: Venda) => {
-              const data = new Date(venda.data);
-              const index = acc.findIndex(
-                (item) => item.data.getTime() === data.getTime()
-              );
-              if (index === -1) {
-                acc.push({
-                  data,
-                  quantidade: venda.produtos.reduce(
-                    (total, item) => total + item.quantidade,
-                    0
-                  ),
-                  valor: venda.total,
-                });
-              } else {
-                acc[index].quantidade += venda.produtos.reduce(
-                  (total, item) => total + item.quantidade,
-                  0
-                );
-                acc[index].valor += venda.total;
-              }
-              return acc;
-            },
-            []
-          );
+          const vendasPorDia = vendasFiltradas.reduce<
+            Record<string, { quantidade: number; valor: number }>
+          >((acc, venda) => {
+            const data = new Date(venda.data).toISOString().split("T")[0];
+            acc[data] ??= { quantidade: 0, valor: 0 };
+            acc[data].quantidade += 1;
+            acc[data].valor += venda.total;
+            return acc;
+          }, {});
 
           // Agrupa vendas por forma de pagamento
-          const vendasPorFormaPagamento = vendasNoPeriodo.reduce(
-            (acc: VendaPorFormaPagamento[], venda: Venda) => {
-              const index = acc.findIndex(
-                (item: VendaPorFormaPagamento) =>
-                  item.forma === venda.formaPagamento
-              );
-              if (index === -1) {
-                acc.push({
-                  forma: venda.formaPagamento,
-                  quantidade: venda.produtos.length,
-                  valor: venda.total,
-                });
-              } else {
-                acc[index].quantidade += venda.produtos.length;
-                acc[index].valor += venda.total;
-              }
-              return acc;
-            },
-            []
-          );
+          const vendasPorFormaPagamento = vendasFiltradas.reduce<
+            Record<string, { quantidade: number; valor: number }>
+          >((acc, venda) => {
+            acc[venda.formaPagamento] ??= { quantidade: 0, valor: 0 };
+            acc[venda.formaPagamento].quantidade += 1;
+            acc[venda.formaPagamento].valor += venda.total;
+            return acc;
+          }, {});
 
           // Agrupa vendas por categoria
-          const vendasPorCategoria = vendasNoPeriodo.reduce(
-            (acc: VendaPorCategoria[], venda: Venda) => {
-              venda.produtos.forEach((item: ItemVendaRelatorio) => {
-                const categoria = item.produto.categoria;
-                const index = acc.findIndex(
-                  (item) => item.categoria === categoria
-                );
-                if (index === -1) {
-                  acc.push({
-                    categoria,
-                    quantidade: item.quantidade,
-                    valor: item.valorTotal,
-                  });
-                } else {
-                  acc[index].quantidade += item.quantidade;
-                  acc[index].valor += item.valorTotal;
-                }
-              });
-              return acc;
-            },
-            []
-          );
+          const vendasPorCategoria = vendasFiltradas.reduce<
+            Record<string, { quantidade: number; valor: number }>
+          >((acc, venda) => {
+            venda.produtos.forEach((item) => {
+              const categoria = item.produto.categoria;
+              acc[categoria] ??= { quantidade: 0, valor: 0 };
+              acc[categoria].quantidade += item.quantidade;
+              acc[categoria].valor += item.valorTotal;
+            });
+            return acc;
+          }, {});
 
-          // Calcula produtos mais vendidos
-          const produtosMaisVendidos = vendasNoPeriodo
-            .reduce(
-              (
-                acc: Array<{
-                  produto: Produto;
-                  quantidade: number;
-                  valor: number;
-                }>,
-                venda: Venda
-              ) => {
-                const produtos = useProdutoStore.getState().produtos;
-                venda.produtos.forEach((item) => {
-                  const produto = produtos.find(
-                    (p: Produto) => p.id === item.produto.id
-                  );
-                  if (!produto) return;
+          // Agrupa produtos mais vendidos
+          const produtosMaisVendidos = vendasFiltradas.reduce<
+            Record<
+              string,
+              { produto: Produto; quantidade: number; valor: number }
+            >
+          >((acc, venda) => {
+            venda.produtos.forEach((item) => {
+              const produtoId = item.produto.id;
+              acc[produtoId] ??= {
+                produto: item.produto,
+                quantidade: 0,
+                valor: 0,
+              };
+              acc[produtoId].quantidade += item.quantidade;
+              acc[produtoId].valor += item.valorTotal;
+            });
+            return acc;
+          }, {});
 
-                  const index = acc.findIndex(
-                    (p) => p.produto.id === produto.id
-                  );
-                  if (index === -1) {
-                    acc.push({
-                      produto,
-                      quantidade: item.quantidade,
-                      valor: item.valorTotal,
-                    });
-                  } else {
-                    acc[index].quantidade += item.quantidade;
-                    acc[index].valor += item.valorTotal;
-                  }
-                });
-                return acc;
-              },
-              []
-            )
-            .sort((a, b) => b.quantidade - a.quantidade)
-            .slice(0, 5);
-
-          // Calcula clientes mais frequentes
-          const clientesMaisFrequentes = vendasNoPeriodo
-            .reduce(
-              (
-                acc: Array<{
-                  cliente: Cliente;
-                  quantidade: number;
-                  valor: number;
-                }>,
-                venda: Venda
-              ) => {
-                const clientes = useClienteStore.getState().clientes;
-                const cliente = clientes.find(
-                  (c: Cliente) => c.id === venda.cliente.id
-                );
-                if (!cliente) return acc;
-
-                const index = acc.findIndex((c) => c.cliente.id === cliente.id);
-                if (index === -1) {
-                  acc.push({
-                    cliente,
-                    quantidade: 1,
-                    valor: venda.total,
-                  });
-                } else {
-                  acc[index].quantidade += 1;
-                  acc[index].valor += venda.total;
-                }
-                return acc;
-              },
-              []
-            )
-            .sort((a, b) => b.quantidade - a.quantidade)
-            .slice(0, 5);
-
-          const relatorio = {
+          const relatorio: RelatorioVendas = {
             periodo,
             totalVendas,
-            valorTotal,
-            vendasPorDia,
-            vendasPorFormaPagamento,
-            vendasPorCategoria,
-            produtosMaisVendidos,
-            clientesMaisFrequentes,
+            valorTotal: totalVendas,
+            vendasPorDia: Object.entries(vendasPorDia).map(([data, dados]) => ({
+              data: new Date(data),
+              quantidade: dados.quantidade,
+              valor: dados.valor,
+            })),
+            vendasPorFormaPagamento: Object.entries(
+              vendasPorFormaPagamento
+            ).map(([forma, dados]) => ({
+              forma,
+              quantidade: dados.quantidade,
+              valor: dados.valor,
+            })),
+            vendasPorCategoria: Object.entries(vendasPorCategoria).map(
+              ([categoria, dados]) => ({
+                categoria,
+                quantidade: dados.quantidade,
+                valor: dados.valor,
+              })
+            ),
+            produtosMaisVendidos: Object.values(produtosMaisVendidos),
+            clientesMaisFrequentes: vendasFiltradas.reduce<
+              Array<{
+                cliente: ClienteResumido;
+                quantidade: number;
+                valor: number;
+              }>
+            >((acc, venda) => {
+              const clienteExistente = acc.find(
+                (item) => item.cliente.id === venda.cliente.id
+              );
+              if (clienteExistente) {
+                clienteExistente.quantidade += 1;
+                clienteExistente.valor += venda.total;
+              } else {
+                acc.push({
+                  cliente: {
+                    id: venda.cliente.id,
+                    nome: venda.cliente.nome,
+                    cpf: venda.cliente.cpf,
+                  },
+                  quantidade: 1,
+                  valor: venda.total,
+                });
+              }
+              return acc;
+            }, []),
           };
+
+          console.log("Relatório de vendas gerado:", relatorio);
 
           set({ relatorioVendas: relatorio, isLoading: false });
           return relatorio;
         } catch (error) {
+          console.error("Erro ao gerar relatório de vendas:", error);
           set({
             error:
               error instanceof Error
@@ -1277,94 +1371,94 @@ export const useRelatorioStore = create<RelatorioState>()(
           throw error;
         }
       },
-      gerarRelatorioFinanceiro: async (periodo) => {
+
+      gerarRelatorioFinanceiro: async (periodo: {
+        inicio: Date;
+        fim: Date;
+      }) => {
         try {
+          console.log("Iniciando geração de relatório financeiro:", periodo);
           set({ isLoading: true, error: null });
 
-          // Busca dados financeiros
           const response = await fetch("/api/financeiro/transacoes");
           if (!response.ok) throw new Error("Erro ao carregar transações");
           const transacoes = (await response.json()) as TransacaoFinanceira[];
 
+          console.log("Transações carregadas da API:", transacoes);
+
           // Filtra transações pelo período
-          const transacoesNoPeriodo = transacoes.filter(
-            (transacao: TransacaoFinanceira) => {
-              const data = new Date(transacao.data);
-              return data >= periodo.inicio && data <= periodo.fim;
-            }
+          const transacoesFiltradas = transacoes.filter(
+            (transacao) =>
+              new Date(transacao.data) >= periodo.inicio &&
+              new Date(transacao.data) <= periodo.fim
           );
 
-          // Calcula totais
-          const receitas = transacoesNoPeriodo
-            .filter((t: TransacaoFinanceira) => t.tipo === "receita")
-            .reduce(
-              (total: number, t: TransacaoFinanceira) => total + t.valor,
-              0
-            );
+          console.log("Transações filtradas por período:", transacoesFiltradas);
 
-          const despesas = transacoesNoPeriodo
-            .filter((t: TransacaoFinanceira) => t.tipo === "despesa")
-            .reduce(
-              (total: number, t: TransacaoFinanceira) => total + t.valor,
-              0
-            );
+          // Calcula totais
+          const receitas = transacoesFiltradas
+            .filter((t) => t.tipo === "receita")
+            .reduce((total, t) => total + t.valor, 0);
+
+          const despesas = transacoesFiltradas
+            .filter((t) => t.tipo === "despesa")
+            .reduce((total, t) => total + t.valor, 0);
+
+          console.log("Totais calculados:", { receitas, despesas });
 
           // Agrupa transações por categoria
-          interface TransacaoPorCategoria {
-            categoria: string;
-            receitas: number;
-            despesas: number;
-          }
-
-          const transacoesPorCategoria = transacoesNoPeriodo.reduce<
-            TransacaoPorCategoria[]
+          const transacoesPorCategoria = transacoesFiltradas.reduce<
+            Record<string, { receitas: number; despesas: number }>
           >((acc, transacao) => {
-            const index = acc.findIndex(
-              (item) => item.categoria === transacao.categoria
-            );
-            if (index === -1) {
-              acc.push({
-                categoria: transacao.categoria,
-                receitas: transacao.tipo === "receita" ? transacao.valor : 0,
-                despesas: transacao.tipo === "despesa" ? transacao.valor : 0,
-              });
+            const categoria = transacao.categoria;
+            acc[categoria] ??= { receitas: 0, despesas: 0 };
+            if (transacao.tipo === "receita") {
+              acc[categoria].receitas += transacao.valor;
             } else {
-              if (transacao.tipo === "receita") {
-                acc[index].receitas += transacao.valor;
-              } else {
-                acc[index].despesas += transacao.valor;
-              }
+              acc[categoria].despesas += transacao.valor;
             }
             return acc;
-          }, []);
+          }, {});
+
+          console.log(
+            "Transações agrupadas por categoria:",
+            transacoesPorCategoria
+          );
+
+          // Agrupa transações por forma de pagamento
+          const transacoesPorFormaPagamento = transacoesFiltradas.reduce<
+            Record<string, { receitas: number; despesas: number }>
+          >((acc, transacao) => {
+            const forma = transacao.formaPagamento;
+            acc[forma] ??= { receitas: 0, despesas: 0 };
+            if (transacao.tipo === "receita") {
+              acc[forma].receitas += transacao.valor;
+            } else {
+              acc[forma].despesas += transacao.valor;
+            }
+            return acc;
+          }, {});
+
+          console.log(
+            "Transações agrupadas por forma de pagamento:",
+            transacoesPorFormaPagamento
+          );
 
           // Agrupa transações por dia
-          interface TransacaoPorDia {
-            data: string;
-            receitas: number;
-            despesas: number;
-          }
-
-          const transacoesPorDia = transacoesNoPeriodo.reduce<
-            TransacaoPorDia[]
+          const transacoesPorDia = transacoesFiltradas.reduce<
+            Record<string, { receitas: number; despesas: number }>
           >((acc, transacao) => {
-            const data = new Date(transacao.data).toLocaleDateString("pt-BR");
-            const index = acc.findIndex((item) => item.data === data);
-            if (index === -1) {
-              acc.push({
-                data,
-                receitas: transacao.tipo === "receita" ? transacao.valor : 0,
-                despesas: transacao.tipo === "despesa" ? transacao.valor : 0,
-              });
+            const data = new Date(transacao.data).toISOString().split("T")[0];
+            acc[data] ??= { receitas: 0, despesas: 0 };
+            if (transacao.tipo === "receita") {
+              acc[data].receitas += transacao.valor;
             } else {
-              if (transacao.tipo === "receita") {
-                acc[index].receitas += transacao.valor;
-              } else {
-                acc[index].despesas += transacao.valor;
-              }
+              acc[data].despesas += transacao.valor;
             }
             return acc;
-          }, []);
+          }, {});
+
+          console.log("Transações agrupadas por dia:", transacoesPorDia);
 
           const relatorio: RelatorioFinanceiro = {
             periodo,
@@ -1372,71 +1466,54 @@ export const useRelatorioStore = create<RelatorioState>()(
             saldoFinal: receitas - despesas,
             totalReceitas: receitas,
             totalDespesas: despesas,
-            receitasPorCategoria: transacoesPorCategoria
-              .filter((t) => t.receitas > 0)
-              .map((t) => ({
-                categoria: t.categoria,
+            receitasPorCategoria: Object.entries(transacoesPorCategoria)
+              .filter(([_, dados]) => dados.receitas > 0)
+              .map(([categoria, dados]) => ({
+                categoria,
                 quantidade: 1,
-                valor: t.receitas,
+                valor: dados.receitas,
               })),
-            despesasPorCategoria: transacoesPorCategoria
-              .filter((t) => t.despesas > 0)
-              .map((t) => ({
-                categoria: t.categoria,
+            despesasPorCategoria: Object.entries(transacoesPorCategoria)
+              .filter(([_, dados]) => dados.despesas > 0)
+              .map(([categoria, dados]) => ({
+                categoria,
                 quantidade: 1,
-                valor: t.despesas,
+                valor: dados.despesas,
               })),
-            receitasPorFormaPagamento: transacoesNoPeriodo
-              .filter((t) => t.tipo === "receita")
-              .reduce<
-                Array<{ forma: string; quantidade: number; valor: number }>
-              >((acc, t) => {
-                const index = acc.findIndex(
-                  (f) => f.forma === t.formaPagamento
-                );
-                if (index === -1) {
-                  acc.push({
-                    forma: t.formaPagamento,
-                    quantidade: 1,
-                    valor: t.valor,
-                  });
-                } else {
-                  acc[index].quantidade += 1;
-                  acc[index].valor += t.valor;
-                }
-                return acc;
-              }, []),
-            despesasPorFormaPagamento: transacoesNoPeriodo
-              .filter((t) => t.tipo === "despesa")
-              .reduce<
-                Array<{ forma: string; quantidade: number; valor: number }>
-              >((acc, t) => {
-                const index = acc.findIndex(
-                  (f) => f.forma === t.formaPagamento
-                );
-                if (index === -1) {
-                  acc.push({
-                    forma: t.formaPagamento,
-                    quantidade: 1,
-                    valor: t.valor,
-                  });
-                } else {
-                  acc[index].quantidade += 1;
-                  acc[index].valor += t.valor;
-                }
-                return acc;
-              }, []),
-            fluxoCaixa: transacoesPorDia.map((t) => ({
-              data: new Date(t.data),
-              receitas: t.receitas,
-              despesas: t.despesas,
-              saldo: t.receitas - t.despesas,
-            })),
+            receitasPorFormaPagamento: Object.entries(
+              transacoesPorFormaPagamento
+            )
+              .filter(([_, dados]) => dados.receitas > 0)
+              .map(([forma, dados]) => ({
+                forma,
+                quantidade: 1,
+                valor: dados.receitas,
+              })),
+            despesasPorFormaPagamento: Object.entries(
+              transacoesPorFormaPagamento
+            )
+              .filter(([_, dados]) => dados.despesas > 0)
+              .map(([forma, dados]) => ({
+                forma,
+                quantidade: 1,
+                valor: dados.despesas,
+              })),
+            fluxoCaixa: Object.entries(transacoesPorDia).map(
+              ([data, dados]) => ({
+                data: new Date(data),
+                receitas: dados.receitas,
+                despesas: dados.despesas,
+                saldo: dados.receitas - dados.despesas,
+              })
+            ),
           };
+
+          console.log("Relatório financeiro gerado:", relatorio);
 
           set({ relatorioFinanceiro: relatorio, isLoading: false });
           return relatorio;
         } catch (error) {
+          console.error("Erro ao gerar relatório financeiro:", error);
           set({
             error:
               error instanceof Error
@@ -1447,105 +1524,79 @@ export const useRelatorioStore = create<RelatorioState>()(
           throw error;
         }
       },
-      gerarRelatorioEstoque: async () => {
+
+      gerarRelatorioEstoque: async (periodo: { inicio: Date; fim: Date }) => {
         try {
+          console.log("Gerando relatório de estoque para o período:", periodo);
           set({ isLoading: true, error: null });
 
-          // Busca dados de produtos e movimentações
-          const [produtosResponse, movimentacoesResponse] = await Promise.all([
-            fetch("/api/produtos"),
-            fetch("/api/estoque/movimentacoes"),
-          ]);
+          // Busca produtos
+          const produtos = await api.get<Produto[]>("/produtos");
+          if (!Array.isArray(produtos)) {
+            throw new Error(
+              "Resposta inválida da API: produtos não é um array"
+            );
+          }
+          console.log("Produtos carregados:", produtos);
 
-          if (!produtosResponse.ok)
-            throw new Error("Erro ao carregar produtos");
-          if (!movimentacoesResponse.ok)
-            throw new Error("Erro ao carregar movimentações");
+          // Agrupa produtos por categoria
+          const produtosPorCategoria = produtos.reduce<
+            Record<string, { quantidade: number }>
+          >((acc, produto) => {
+            const categoria = produto.categoria;
+            acc[categoria] ??= { quantidade: 0 };
+            acc[categoria].quantidade += produto.estoque;
+            return acc;
+          }, {});
 
-          const produtos = (await produtosResponse.json()) as Produto[];
-          const movimentacoes =
-            (await movimentacoesResponse.json()) as MovimentacaoEstoque[];
+          console.log(
+            "Produtos agrupados por categoria:",
+            produtosPorCategoria
+          );
 
           // Calcula totais
-          const totalProdutos = produtos.length;
-          const valorTotalEstoque = produtos.reduce(
-            (total: number, p: Produto) => total + p.precoCusto * p.estoque,
+          const totalProdutos = produtos.reduce(
+            (total, produto) => total + produto.estoque,
             0
           );
 
-          // Agrupa produtos por categoria
-          interface ProdutoPorCategoria {
-            categoria: string;
-            quantidade: number;
-            valor: number;
-          }
+          console.log("Totais calculados:", {
+            totalProdutos,
+          });
 
-          const produtosPorCategoria = produtos.reduce<ProdutoPorCategoria[]>(
-            (acc, produto) => {
-              const index = acc.findIndex(
-                (item) => item.categoria === produto.categoria
-              );
-              if (index === -1) {
-                acc.push({
-                  categoria: produto.categoria,
-                  quantidade: 1,
-                  valor: produto.precoCusto * produto.estoque,
-                });
-              } else {
-                acc[index].quantidade += 1;
-                acc[index].valor += produto.precoCusto * produto.estoque;
-              }
-              return acc;
-            },
-            []
+          // Identifica produtos com estoque baixo
+          const produtosEstoqueBaixo = produtos.filter(
+            (p) => p.estoque < p.estoqueMinimo
           );
 
-          // Produtos com estoque baixo
-          const produtosComEstoqueBaixo = produtos.filter(
-            (p: Produto) => p.estoque <= p.estoqueMinimo
-          ).length;
-
-          // Produtos sem estoque
-          const produtosSemEstoque = produtos.filter(
-            (p: Produto) => p.estoque === 0
-          ).length;
-
-          // Movimentações recentes
-          const movimentacoesRecentes = movimentacoes
-            .sort(
-              (a: MovimentacaoEstoque, b: MovimentacaoEstoque) =>
-                new Date(b.data).getTime() - new Date(a.data).getTime()
-            )
-            .slice(0, 10);
-
           const relatorio: RelatorioEstoque = {
-            produtosBaixoEstoque: produtos
-              .filter((p) => p.estoque <= p.estoqueMinimo)
+            periodo,
+            totalProdutos,
+            produtosPorCategoria: Object.entries(produtosPorCategoria).map(
+              ([categoria, dados]) => ({
+                categoria,
+                quantidade: dados.quantidade,
+              })
+            ),
+            produtosBaixoEstoque: produtosEstoqueBaixo.map((p) => ({
+              produto: p,
+              estoqueAtual: p.estoque,
+              estoqueMinimo: p.estoqueMinimo,
+            })),
+            produtosSemEstoque: produtos
+              .filter((p) => p.estoque === 0)
               .map((p) => ({
                 produto: p,
                 estoqueAtual: p.estoque,
                 estoqueMinimo: p.estoqueMinimo,
               })),
-            produtosSemEstoque: produtos.filter((p) => p.estoque === 0),
-            produtosMaisVendidos: [], // TODO: Implementar lógica de produtos mais vendidos
-            produtosMenosVendidos: [], // TODO: Implementar lógica de produtos menos vendidos
-            movimentacoesEstoque: movimentacoesRecentes
-              .filter(
-                (m): m is MovimentacaoEstoque & { tipo: "entrada" | "saida" } =>
-                  m.tipo === "entrada" || m.tipo === "saida"
-              )
-              .map(({ produto, tipo, quantidade, data, motivo }) => ({
-                produto,
-                tipo,
-                quantidade,
-                data,
-                motivo,
-              })),
           };
 
+          console.log("Relatório de estoque gerado:", relatorio);
           set({ relatorioEstoque: relatorio, isLoading: false });
           return relatorio;
         } catch (error) {
+          console.error("Erro ao gerar relatório de estoque:", error);
           set({
             error:
               error instanceof Error
@@ -1556,9 +1607,11 @@ export const useRelatorioStore = create<RelatorioState>()(
           throw error;
         }
       },
+
       setLoading: (isLoading) => {
         set({ isLoading });
       },
+
       setError: (error) => {
         set({ error });
       },
@@ -1574,261 +1627,8 @@ export const useRelatorioStore = create<RelatorioState>()(
   )
 );
 
-export const useConfiguracoesStore = create<ConfiguracoesState>((set, get) => ({
-  configuracoes: null,
-  isLoading: false,
-  error: null,
-
-  fetchConfiguracoes: async () => {
-    try {
-      set({ isLoading: true, error: null });
-      // Simulando uma chamada à API com delay
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const configuracoesMock: ConfiguracoesSistema = {
-        empresa: {
-          razaoSocial: "Cris & Drigo Modas LTDA",
-          nomeFantasia: "Cris & Drigo Modas",
-          cnpj: "12.345.678/0001-90",
-          inscricaoEstadual: "123.456.789",
-          endereco: {
-            logradouro: "Rua Principal",
-            numero: "123",
-            bairro: "Centro",
-            cidade: "São Paulo",
-            estado: "SP",
-            cep: "01234-567",
-          },
-          contato: {
-            telefone: "(11) 1234-5678",
-            email: "contato@crisdrigo.com.br",
-            site: "www.crisdrigo.com.br",
-          },
-        },
-        fiscal: {
-          regimeTributario: "simples",
-          cnae: "4781-4/00",
-          serieNFe: "1",
-          numeroNFe: "1",
-        },
-        tema: "claro",
-        idioma: "pt-BR",
-        backupAutomatico: true,
-        intervaloBackup: 24,
-      };
-
-      set({ configuracoes: configuracoesMock, isLoading: false });
-    } catch (error) {
-      set({ error: "Erro ao carregar configurações", isLoading: false });
-    }
-  },
-
-  atualizarConfiguracoes: async (
-    novasConfiguracoes: Partial<ConfiguracoesSistema>
-  ) => {
-    try {
-      set({ isLoading: true, error: null });
-      // Simulando uma chamada à API com delay
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const configuracoesAtuais = get().configuracoes;
-
-      if (!configuracoesAtuais) {
-        throw new Error("Configurações não carregadas");
-      }
-
-      // Aqui você implementaria a chamada à API
-      const configuracoesAtualizadas = {
-        ...configuracoesAtuais,
-        ...novasConfiguracoes,
-      };
-
-      set({ configuracoes: configuracoesAtualizadas, isLoading: false });
-    } catch (error) {
-      set({ error: "Erro ao atualizar configurações", isLoading: false });
-      throw error;
-    }
-  },
-
-  resetarConfiguracoes: async () => {
-    try {
-      set({ isLoading: true, error: null });
-      // Aqui você implementaria a chamada à API para resetar as configurações
-      await get().fetchConfiguracoes();
-    } catch (error) {
-      set({ error: "Erro ao resetar configurações", isLoading: false });
-      throw error;
-    }
-  },
-
-  realizarBackup: async () => {
-    try {
-      set({ isLoading: true, error: null });
-      // Simulando uma chamada à API com delay
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const configuracoes = get().configuracoes;
-      if (!configuracoes) {
-        throw new Error("Configurações não carregadas");
-      }
-
-      // Simulando um backup
-      const backup = {
-        ...configuracoes,
-        ultimoBackup: new Date(),
-      };
-
-      set({ configuracoes: backup, isLoading: false });
-    } catch (error) {
-      set({ error: "Erro ao realizar backup", isLoading: false });
-      throw error;
-    }
-  },
-
-  restaurarBackup: async (data: Date) => {
-    try {
-      set({ isLoading: true, error: null });
-      // Aqui você implementaria a lógica de restauração
-      // Por enquanto, apenas recarregamos as configurações
-      await get().fetchConfiguracoes();
-    } catch (error) {
-      set({ error: "Erro ao restaurar backup", isLoading: false });
-      throw error;
-    }
-  },
-}));
-
-// Store de Estoque
-export const useEstoqueStore = create<EstoqueState>()(
-  persist(
-    (set, get) => ({
-      movimentacoes: [],
-      ajustes: [],
-      transferencias: [],
-      isLoading: false,
-      error: null,
-      fetchMovimentacoes: async () => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await fetch("/api/estoque/movimentacoes");
-          if (!response.ok) throw new Error("Erro ao carregar movimentações");
-          const movimentacoes =
-            (await response.json()) as MovimentacaoEstoque[];
-          set({ movimentacoes, isLoading: false });
-        } catch (error) {
-          set({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Erro ao carregar movimentações",
-            isLoading: false,
-          });
-        }
-      },
-      adicionarMovimentacao: (movimentacao) => {
-        set({ isLoading: true, error: null });
-        fetch("/api/estoque/movimentacoes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(movimentacao),
-        })
-          .then((response) => {
-            if (!response.ok) throw new Error("Erro ao adicionar movimentação");
-            return response.json();
-          })
-          .then((novaMovimentacao) => {
-            set((state) => ({
-              movimentacoes: [...state.movimentacoes, novaMovimentacao],
-              isLoading: false,
-            }));
-          })
-          .catch((error: unknown) => {
-            set({
-              error:
-                error instanceof Error
-                  ? error.message
-                  : "Erro ao adicionar movimentação",
-              isLoading: false,
-            });
-          });
-      },
-      getProdutosBaixoEstoque: () => {
-        try {
-          const produtos = useProdutoStore.getState().produtos;
-          return produtos
-            .filter((p: Produto) => p.estoque <= p.estoqueMinimo)
-            .map((p: Produto) => ({
-              produto: p,
-              estoqueAtual: p.estoque,
-              estoqueMinimo: p.estoqueMinimo,
-            }));
-        } catch {
-          return [];
-        }
-      },
-      getProdutosSemEstoque: () => {
-        try {
-          const produtos = useProdutoStore.getState().produtos;
-          return produtos.filter((p: Produto) => p.estoque === 0);
-        } catch {
-          return [];
-        }
-      },
-      getHistoricoMovimentacoes: (periodo?: { inicio: Date; fim: Date }) => {
-        try {
-          const movimentacoes = get().movimentacoes;
-          if (!periodo) return movimentacoes;
-          return movimentacoes.filter((m) => {
-            const dataMov = new Date(m.data);
-            return dataMov >= periodo.inicio && dataMov <= periodo.fim;
-          });
-        } catch {
-          return [];
-        }
-      },
-      adicionarAjuste: (ajuste) => {
-        set((state) => ({
-          ajustes: [
-            ...state.ajustes,
-            { ...ajuste, id: crypto.randomUUID(), data: new Date() },
-          ],
-        }));
-      },
-      adicionarTransferencia: (transferencia) => {
-        set((state) => ({
-          transferencias: [
-            ...state.transferencias,
-            { ...transferencia, id: crypto.randomUUID(), data: new Date() },
-          ],
-        }));
-      },
-      atualizarTransferencia: (id, status) => {
-        set((state) => ({
-          transferencias: state.transferencias.map((t) =>
-            t.id === id ? { ...t, status } : t
-          ),
-        }));
-      },
-      getMovimentacoesPorProduto: (produtoId) => {
-        return get().movimentacoes.filter((m) => m.produto.id === produtoId);
-      },
-      getAjustesPorProduto: (produtoId) => {
-        return get().ajustes.filter((a) => a.produto.id === produtoId);
-      },
-      getTransferenciasPorProduto: (produtoId) => {
-        return get().transferencias.filter((t) => t.produto.id === produtoId);
-      },
-      setLoading: (isLoading) => {
-        set({ isLoading });
-      },
-      setError: (error) => {
-        set({ error });
-      },
-    }),
-    {
-      name: "estoque-storage",
-    }
-  )
-);
-
-export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
+// Store de Usuários
+export const useUsuarioStore = create<UsuarioStore>((set) => ({
   usuarios: [],
   loading: false,
   error: null,
@@ -1836,7 +1636,6 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
   fetchUsuarios: async () => {
     try {
       set({ loading: true, error: null });
-      // TODO: Implementar chamada à API
       const response = await fetch("/api/usuarios");
       if (!response.ok) throw new Error("Erro ao carregar usuários");
       const data = (await response.json()) as Usuario[];
@@ -1853,7 +1652,6 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
   adicionarUsuario: async (usuario) => {
     try {
       set({ loading: true, error: null });
-      // TODO: Implementar chamada à API
       const response = await fetch("/api/usuarios", {
         method: "POST",
         headers: {
@@ -1880,7 +1678,6 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
   atualizarUsuario: async (id, usuario) => {
     try {
       set({ loading: true, error: null });
-      // TODO: Implementar chamada à API
       const response = await fetch(`/api/usuarios/${id}`, {
         method: "PUT",
         headers: {
@@ -1909,7 +1706,6 @@ export const useUsuarioStore = create<UsuarioStore>((set, get) => ({
   removerUsuario: async (id) => {
     try {
       set({ loading: true, error: null });
-      // TODO: Implementar chamada à API
       await fetch(`/api/usuarios/${id}`, {
         method: "DELETE",
       });

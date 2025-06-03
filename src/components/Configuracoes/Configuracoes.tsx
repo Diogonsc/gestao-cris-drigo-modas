@@ -392,7 +392,9 @@ export default function Configuracoes() {
                   <div className="space-y-2">
                     <Label>Regime Tributário</Label>
                     <Select
-                      defaultValue={configuracoes?.fiscal.regimeTributario}
+                      defaultValue={
+                        configuracoes?.fiscal?.regimeTributario || "simples"
+                      }
                       onValueChange={(value) =>
                         register("fiscal.regimeTributario").onChange({
                           target: { value },
