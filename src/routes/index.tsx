@@ -185,6 +185,13 @@ const routes: RouteConfig[] = [
     permissions: ["gerenciar_financeiro"],
   },
   {
+    path: "/financeiro/nova",
+    element: lazy(() => import("../pages/NovaTransacao").then(module => ({ default: module.default })) ),
+    title: "Nova Transação",
+    requiresAuth: true,
+    permissions: ["gerenciar_financeiro"],
+  },
+  {
     path: "/relatorios",
     element: Relatorios,
     title: "Relatórios",

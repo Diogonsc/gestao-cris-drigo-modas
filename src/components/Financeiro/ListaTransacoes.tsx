@@ -38,6 +38,7 @@ import {
 } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function ListaTransacoes() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,6 +65,8 @@ export function ListaTransacoes() {
     totalReceitas,
     totalDespesas,
   } = useFinanceiroStore();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTransacoes();
@@ -144,7 +147,7 @@ export function ListaTransacoes() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => navigate("/financeiro/nova")}>
             <Plus className="mr-2 h-4 w-4" /> Nova Transação
           </Button>
         </div>
